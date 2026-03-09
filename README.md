@@ -4,3 +4,4 @@
 
 ## Members
 - Jester Santos
+- Zachary Tassin
