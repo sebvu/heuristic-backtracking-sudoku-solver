@@ -3,4 +3,4 @@
 **Topic:** Heuristic Backtracking Sudoku Solver
 
 ## Members
-
+- Jester Santos
