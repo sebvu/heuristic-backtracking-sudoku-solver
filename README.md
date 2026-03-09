@@ -5,3 +5,4 @@
 ## Members
 - Jester Santos
 - Zachary Tassin
+- Mazin Safer
