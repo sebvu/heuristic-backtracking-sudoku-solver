@@ -5,12 +5,15 @@ from tkinter import *
 # each vertical and horizontal squares must also contain 1-9 uniquely
 # every sudoku has "exactly" one correct solution
 # case corresponds with a unique sudoku map
+
+# methods below are currently a theoretical structure
 class SudokuWorld:
     def __init__(self):
         self.WIDTH = 81
         self.HEIGHT = 81
         self.expRes = {}
 
+    # Add a new experiment result with key ID
     def __addExpRes(self, ID, res):
         if self.__isIDInExpRes(ID): # secondary checks
             print(f"ID {ID} already populated, failed to add to expRes.")
@@ -19,9 +22,11 @@ class SudokuWorld:
         self.expRes[ID] = res
         return
 
+    # Verify if ID is already in expRes
     def __isIDInExpRes(self, ID) -> bool:
         return True if ID in self.expRes else False # primary check
 
+    # Display specific results with corresponding ID
     def displayExpRes(self, ID):
 
         if not self.__isIDInExpRes(ID):
@@ -31,12 +36,15 @@ class SudokuWorld:
         print(f"displaying result for {ID} below") # will be implemented via tkinter
         print(self.expRes[ID])
 
+    # Display ALL results
     def expResSummary(self):
         print("displays experiment summary") # will be implemented via tkinter
 
+    # Clear ALL experiment results
     def clearExpRes(self):
         self.expRes.clear()
 
+    # Brute force solve experiment
     def bruteForceSolve(self, ID, case):
         if self.__isIDInExpRes(ID):
             print(f"{ID} is not unique. terminate brute force solver for case {case}")
@@ -46,6 +54,7 @@ class SudokuWorld:
         res = f"results for case {case} ID {ID} brute force"
         self.__addExpRes(ID, res)
 
+    # Heuristics solve experiment
     def heuristicsSolve(self, ID, case):
         if self.__isIDInExpRes(ID):
             print(f"{ID} is not unique. terminate heuristics solver for case {case}")
@@ -55,6 +64,7 @@ class SudokuWorld:
         res = f"results for case {case} ID {ID} heuristics"
         self.__addExpRes(ID, res)
 
+# main func
 if __name__==__name__:
     s = SudokuWorld()
 
