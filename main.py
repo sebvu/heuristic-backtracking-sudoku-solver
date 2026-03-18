@@ -1,16 +1,27 @@
+import sys
+import math
 from tkinter import *
 
-# 81 squares, split into 9 blocks containing 9 squares in a 3x3 brid
-# each of the 9 blocks has to contain all numbers 1-9 in their squares
-# each vertical and horizontal squares must also contain 1-9 uniquely
-# every sudoku has "exactly" one correct solution
-# case corresponds with a unique sudoku map
+"""
+81 squares, split into 9 blocks containing 9 squares in a 3x3 brid
+each of the 9 blocks has to contain all numbers 1-9 in their squares
+each vertical and horizontal squares must also contain 1-9 uniquely
+every sudoku has "exactly" one correct solution
+case corresponds with a unique sudoku map
+"""
 
-# methods below are currently a theoretical structure
+"""
+TERMINOLOGY:
+    cell: a 3x3 grid
+    sMap = the sudoku map
+    expRes = a dictionary containing a unique lookup ID, and the results (this is tentative)
+"""
+
 class SudokuWorld:
     def __init__(self):
-        self.WIDTH = 81
-        self.HEIGHT = 81
+        self.X_COLS = 9
+        self.Y_ROWS = 9
+        self.sMap = [[self.X_COLS] * self.Y_ROWS]
         self.expRes = {}
 
     # Add a new experiment result with key ID
@@ -25,6 +36,21 @@ class SudokuWorld:
     # Verify if ID is already in expRes
     def __isIDInExpRes(self, ID) -> bool:
         return True if ID in self.expRes else False # primary check
+
+    # verify position being checked before proceeding, will terminate program if not a valid position
+    def __verifyPos(self, X, Y, funcName) -> bool:
+        if X < 0 or X > 8 or Y < 0 or Y > 8:
+            sys.exit(f"value X or Y: ({X},{Y}) beyond boundaries, function call: {funcName}")
+        else:
+            return True
+
+    def __verifyGameFromPos(self, X, Y) -> bool:
+        # get the num cell multiplier to apply to the X, Y position
+        x_cell, y_cell = math.floor(X/3) + 1, math.floor(Y/3) + 1
+
+    
+        
+
 
     # Display specific results with corresponding ID
     def displayExpRes(self, ID):
@@ -75,5 +101,3 @@ if __name__==__name__:
     s.displayExpRes(1)
     s.displayExpRes(2)
     s.displayExpRes(3)
-
-    s.expResSummary()
