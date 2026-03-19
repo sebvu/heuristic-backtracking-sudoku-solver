@@ -3,14 +3,6 @@ import math
 from tkinter import *
 
 """
-81 squares, split into 9 blocks containing 9 squares in a 3x3 brid
-each of the 9 blocks has to contain all numbers 1-9 in their squares
-each vertical and horizontal squares must also contain 1-9 uniquely
-every sudoku has "exactly" one correct solution
-case corresponds with a unique sudoku map
-"""
-
-"""
 TERMINOLOGY:
     cell: a 3x3 grid
     sMap = the sudoku map
@@ -98,21 +90,41 @@ class SudokuWorld:
             return
 
         print(f"displaying result for {ID} below") # will be implemented via tkinter
-        print(self.expRes[ID])
+        print(self.expRes[ID]) # temporary method
 
     # Display ALL results
     def expResSummary(self):
         print("displays experiment summary") # will be implemented via tkinter
+        print(self.expRes) # temporary method
 
     # Clear ALL experiment results
     def clearExpRes(self):
         self.expRes.clear()
+
+    """
+    NOTE TO CONTRIBUTORS:
+    
+    below is the section yall should mainly be focusing on, i.e. the brute force and heuristics function
+
+    in each one, you will be making a call to ID, and case val (refer to cases/ folder for names), make sure to put the
+    FULL file name ex. bruteForceSolve(1, "case1.txt"). ID must be unique
+    """
 
     # Brute force solve experiment
     def bruteForceSolve(self, ID, case):
         if self.__isIDInExpRes(ID):
             print(f"{ID} is not unique. terminate brute force solver for case {case}")
             return
+
+        """
+        implement brute force solver here
+        res should contain in itself some datastructure, maybe a dict as well, that stores the following:
+        - solve time
+        - number of operations
+        - number of explored nodes
+        - number of backtracks
+        - memory usage (tentative)
+        """
 
         print(f"brute force solve case {case}, ID {ID}")
         res = f"results for case {case} ID {ID} brute force"
@@ -124,6 +136,16 @@ class SudokuWorld:
             print(f"{ID} is not unique. terminate heuristics solver for case {case}")
             return
 
+        """
+        implement heuristics solver solver here
+        res should contain in itself some datastructure, maybe a dict as well, that stores the following:
+        - solve time
+        - number of operations
+        - number of explored nodes
+        - number of backtracks
+        - memory usage (tentative)
+        """
+
         print(f"heuristics solve case {case}, ID {ID}")
         res = f"results for case {case} ID {ID} heuristics"
         self.__addExpRes(ID, res)
@@ -132,12 +154,12 @@ class SudokuWorld:
 if __name__==__name__:
     s = SudokuWorld()
 
-    # s.bruteForceSolve(1, "1")
-    # s.heuristicsSolve(2, "2")
-    # s.heuristicsSolve(2, "67") # repeat
-    #
-    # s.displayExpRes(1)
-    # s.displayExpRes(2)
-    # s.displayExpRes(3)
+    s.bruteForceSolve(1, "1")
+    s.heuristicsSolve(2, "2")
+    s.heuristicsSolve(2, "67") # repeat
+
+    s.displayExpRes(1)
+    s.displayExpRes(2)
+    s.displayExpRes(3)
 
     print(s.sMap)

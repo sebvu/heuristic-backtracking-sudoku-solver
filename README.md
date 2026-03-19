@@ -6,3 +6,6 @@
 - Jester Santos
 - Zachary Tassin
 - Mazin Safer
+
+citations for sudoku puzzles
+https://sandiway.arizona.edu/sudoku/examples.html
