@@ -1,6 +1,7 @@
 import sys
 import math
 from tkinter import *
+import pandas as pd
 
 """
 TERMINOLOGY:
@@ -153,13 +154,17 @@ class SudokuWorld:
 # main func
 if __name__==__name__:
     s = SudokuWorld()
+    #
+    # s.bruteForceSolve(1, "1")
+    # s.heuristicsSolve(2, "2")
+    # s.heuristicsSolve(2, "67") # repeat
+    #
+    # s.displayExpRes(1)
+    # s.displayExpRes(2)
+    # s.displayExpRes(3)
+    #
+    # print(s.sMap)
 
-    s.bruteForceSolve(1, "1")
-    s.heuristicsSolve(2, "2")
-    s.heuristicsSolve(2, "67") # repeat
+    df = pd.read_csv("data.csv")
 
-    s.displayExpRes(1)
-    s.displayExpRes(2)
-    s.displayExpRes(3)
-
-    print(s.sMap)
+    print(df.to_string())
