@@ -1,6 +1,6 @@
 import sys
 import math
-from tkinter import *
+# from tkinter import *
 import pandas as pd
 
 """
@@ -15,7 +15,11 @@ class SudokuWorld:
         self.X_COLS = 9
         self.Y_ROWS = 9
         self.sMap = [[0] * self.X_COLS] * self.Y_ROWS
-        self.expRes = dict()
+        self.expRes = { "isHeuristic": [bool],
+                        "solveTimeMs": [int],
+                        "numOfOperations": [int],
+                        "numOfBacktraces": [int],
+                        "memUsage": [int] }
 
     # Add a new experiment result with key ID
     def __addExpRes(self, ID, res):
@@ -45,7 +49,7 @@ class SudokuWorld:
         s = set()
         for y in range(3):
             for x in range(3):
-                valAtPos = self.expRes[(y_cell * 3) + y][(x_cell * 3) + x]
+                valAtPos = self.sMap[(y_cell * 3) + y][(x_cell * 3) + x]
                 if valAtPos != 0:
                     if valAtPos not in s:
                         s.add(valAtPos)
@@ -58,7 +62,7 @@ class SudokuWorld:
         # verify x col is unique
         s.clear()
         for x in range(self.X_COLS + 1):
-            valAtPos = self.expRes[Y_POS][x]
+            valAtPos = self.sMap[Y_POS][x]
             if valAtPos != 0:
                 if valAtPos not in s:
                     s.add(valAtPos)
@@ -71,7 +75,7 @@ class SudokuWorld:
         # verify y row is unique
         s.clear()
         for y in range(self.Y_ROWS + 1):
-            valAtPos = self.expRes[y][X_POS]
+            valAtPos = self.sMap[y][X_POS]
             if valAtPos != 0:
                 if valAtPos not in s:
                     s.add(valAtPos)
@@ -151,19 +155,28 @@ class SudokuWorld:
         res = f"results for case {case} ID {ID} heuristics"
         self.__addExpRes(ID, res)
 
-# main func
-if __name__==__name__:
+def main():
     s = SudokuWorld()
-    #
-    # s.bruteForceSolve(1, "1")
-    # s.heuristicsSolve(2, "2")
-    # s.heuristicsSolve(2, "67") # repeat
-    #
-    # s.displayExpRes(1)
-    # s.displayExpRes(2)
-    # s.displayExpRes(3)
-    #
-    # print(s.sMap)
+    
+    s.bruteForceSolve(1, "1")
+    s.heuristicsSolve(2, "2")
+    s.heuristicsSolve(2, "67") # repeat
+
+    s.displayExpRes(1)
+    s.displayExpRes(2)
+    s.displayExpRes(3)
+
+    print(s.sMap)
+
     df = pd.read_csv("cases/test.csv")
     
-    print(df.iloc[:1000])
+    # print(df.iloc[:1000])
+    # print(df.head())
+    # print(df.info())
+    # print(df.describe())
+    print(df.columns)
+    # print(df.index)
+
+# main func
+if __name__=="__main__":
+    main()
