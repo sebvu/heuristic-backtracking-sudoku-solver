@@ -121,8 +121,10 @@ class SudokuWorld:
                         "peakMemUsage": [] }
 
     # overwrite current sMap with new q
-    # def __populateSudokuWorld(self, q):
-
+    def __populateSudokuWorld(self, q):
+        for y in range(self.Y_ROWS):
+            for x in range(self.X_COLS):
+                self.sMap[y][x] = q[y * self.Y_ROWS + x]
     """
     NOTE TO CONTRIBUTORS:
     
