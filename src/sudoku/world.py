@@ -26,7 +26,7 @@ FUNCTIONS:
     - from the X, Y position, will check if the cell, X and Y axes are valid. good for checking when you change a value in a certain position
 
     __populateSudokuWorld(q)
-    - overwrites sudoku board with new initial state
+    - overwrites sudoku board with new initial state, ENSURE IT IS ALL INTS
 
     __verifyTerminalReached(self, a) -> bool:
     - verify if terminal has been reached by comparing a to sMap
@@ -56,10 +56,10 @@ class SudokuWorld:
     # Add new res list to expData
     def __addExpData(self, res: List):
         for k, z, r in zip(self.expData.keys(), range(5), res):
-            if (type(r) is bool and z == 0) or (type(r) is int):
+            if (type(r) is bool and z == 0) or (type(r) is int or type(r) is float):
                 self.expData[k].append(r)
             else:
-                raise TypeError("Faulty type detected for res")
+                raise TypeError(f"Faulty type detected for res {res}")
 
     # verify if position about to be accessed is even valid, if it isn't terminate program
     def __verifyPos(self, X_POS, Y_POS, funcName) -> bool:
@@ -123,17 +123,19 @@ class SudokuWorld:
                         "numOfBacktraces": [],
                         "peakMemUsage": [] }
 
-    # overwrite current sMap with new q
+    # overwrite current sMap with new q, ENSURE IT IS ALL INTS
     def __populateSudokuWorld(self, q):
         for y in range(self.Y_ROWS):
             for x in range(self.X_COLS):
-                self.sMap[y][x] = q[y * self.Y_ROWS + x]
+                val = q[(y * self.Y_ROWS) + x]
+                self.sMap[y][x] = 0 if val == "." else int(val)
 
     # verify if terminal has been reached
     def __verifyTerminalReached(self, a) -> bool:
         for y in range(self.Y_ROWS):
             for x in range(self.X_COLS):
-                if self.sMap[y][x] != a[y * self.Y_ROWS + x]:
+                val = a[(y * self.Y_ROWS) + x]
+                if self.sMap[y][x] != val:
                    return False 
         return True
 
@@ -150,8 +152,10 @@ class SudokuWorld:
         sTime = time.monotonic()
         numOfOps = 0
         numOfBtraces = 0
+
+        self.__populateSudokuWorld(q)
         
-        if q != a: # terminal state checker
+        if not self.__verifyTerminalReached(a): # terminal state checker
             """
             implement uninformed function solver here
             do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
@@ -180,7 +184,9 @@ class SudokuWorld:
         numOfOps = 0
         numOfBtraces = 0
 
-        if q != a: # terminal state checker
+        self.__populateSudokuWorld(q)
+        
+        if not self.__verifyTerminalReached(a): # terminal state checker
             """
             implement heuristics solver here
             do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
