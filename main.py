@@ -23,7 +23,7 @@ class SudokuWorld:
                         "solveTimeSecs": [],
                         "numOfOperations": [],
                         "numOfBacktraces": [],
-                        "memUsage": [] }
+                        "peakMemUsage": [] }
 
     # Add new res list to expData
     def __addExpData(self, res: List):
@@ -93,7 +93,7 @@ class SudokuWorld:
                         "solveTimeSecs": [],
                         "numOfOperations": [],
                         "numOfBacktraces": [],
-                        "memUsage": [] }
+                        "peakMemUsage": [] }
 
 
     """
@@ -107,15 +107,18 @@ class SudokuWorld:
     # Brute force solve experiment
     def bruteForceSolve(self, q, a):
         sTime = time.monotonic()
-        if q != a:
+        numOfOps = 0
+        numOfBtraces = 0
+        
+        if q != a: # terminal state checker
             """
             implement brute force solver here
             do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
-            self.expRes = { "isHeuristic": [bool], (this will be False for brute force)
+            self.expRes = { "isHeuristic": [bool],
                             "solveTimeSecs": [int],
                             "numOfOperations": [int],
                             "numOfBacktraces": [int],
-                            "memUsage": [int] }
+                            "peakMemUsage": [int] }
             """
             print("do something")
 
@@ -124,24 +127,27 @@ class SudokuWorld:
         peakInMB = peak / 1024 / 1024
 
         """
-        vvv make sure the two 0 value are set properly vvv
-        res = [False, time.monotonic() - sTime, 0, 0, peakInMB]
-        self.__addExpData(res)
+        vvv make sure numOfOps and numOfBtraces are counted vvv
         """
+        res = [False, time.monotonic() - sTime, numOfOps, numOfBtraces, peakInMB]
+        self.__addExpData(res)
 
 
     # Heuristics solve experiment
     def heuristicsSolve(self, q, a):
         sTime = time.monotonic()
-        if q != a:
+        numOfOps = 0
+        numOfBtraces = 0
+
+        if q != a: # terminal state checker
             """
             implement heuristics solver solver here
             do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
-            self.expRes = { "isHeuristic": [bool], (this will be True for heuristics)
+            self.expRes = { "isHeuristic": [bool],
                             "solveTimeSecs": [int],
                             "numOfOperations": [int],
                             "numOfBacktraces": [int],
-                            "memUsage": [int] }
+                            "peakMemUsage": [int] }
             """
             print("do something")
 
@@ -150,10 +156,10 @@ class SudokuWorld:
         peakInMB = peak / 1024 / 1024
 
         """
-        vvv make sure the two 0 value are set properly vvv
-        res = [True, time.monotonic() - sTime, 0, 0, peakInMB]
-        self.__addExpData(res)
+        vvv make sure numOfOps and numOfBtraces are counted vvv
         """
+        res = [True, time.monotonic() - sTime, numOfOps, numOfBtraces, peakInMB]
+        self.__addExpData(res)
 
 def main():
     s = SudokuWorld()
@@ -161,7 +167,7 @@ def main():
     s.clearExpData() # ensure the dict is set correctly
 
     # max amount of allocated time for each experiment
-    MAX_EXPERIMENT_TIME = 600
+    MAX_EXP_TIME_IN_SECS = 30
 
     print(s.sMap)
 
@@ -172,14 +178,14 @@ def main():
     # test data for bruteForce
     start = time.monotonic()
     for question, answer in zip(df["question"], df["answer"]):
-        if time.monotonic() - start < MAX_EXPERIMENT_TIME
+        if time.monotonic() - start < MAX_EXP_TIME_IN_SECS:
             tracemalloc.reset_peak()
             s.bruteForceSolve(question, answer)
 
     # test data for heuristics
     start = time.monotonic()
     for question, answer in zip(df["question"], df["answer"]):
-        if time.monotonic() - start < MAX_EXPERIMENT_TIME
+        if time.monotonic() - start < MAX_EXP_TIME_IN_SECS:
             tracemalloc.reset_peak()
             s.heuristicsSolve(question, answer)
 
