@@ -3,12 +3,14 @@ import math
 from typing import List
 # from tkinter import *
 import pandas as pd
+import time
 
 """
 TERMINOLOGY:
     cell: a 3x3 grid
     sMap = the sudoku map
     expRes = dict to interpret experiment data
+    terminalState: if sMap == current answer
 """
 
 class SudokuWorld:
@@ -23,12 +25,20 @@ class SudokuWorld:
                         "memUsage": [] }
 
     # Add new res list to expData
-    def addExpData(self, res: List):
+    def __addExpData(self, res: List):
         for k, z in zip(self.expData.keys(), range(5)):
             if (type(z) is bool and z == 0) or (type(z) is int):
                 self.expData[k].append(z)
             else:
                 raise TypeError("Faulty type detected for res")
+
+    # ensure expData is cleared completely
+    def __clearExpData(self):
+        self.expData = { "isHeuristic": [],
+                        "solveTimeMs": [],
+                        "numOfOperations": [],
+                        "numOfBacktraces": [],
+                        "memUsage": [] }
 
     # verify if position about to be accessed is even valid, if it isn't terminate program
     def __verifyPos(self, X_POS, Y_POS, funcName) -> bool:
@@ -93,7 +103,7 @@ class SudokuWorld:
     """
 
     # Brute force solve experiment
-    def bruteForceSolve(self, question, answer):
+    def bruteForceSolve(self, q, a):
         """
         implement brute force solver here
         do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
@@ -102,10 +112,15 @@ class SudokuWorld:
                         "numOfOperations": [int],
                         "numOfBacktraces": [int],
                         "memUsage": [int] }
+
+        vvv make sure values are set properly vvv
+        res = [False, 0, 0, 0, 0]
+        self.__addExpData(res)
         """
 
+
     # Heuristics solve experiment
-    def heuristicsSolve(self, question, answer):
+    def heuristicsSolve(self, q, a):
         """
         implement heuristics solver solver here
         do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
@@ -114,22 +129,33 @@ class SudokuWorld:
                         "numOfOperations": [int],
                         "numOfBacktraces": [int],
                         "memUsage": [int] }
+
+        vvv make sure values are set properly vvv
+        res = [False, 0, 0, 0, 0]
+        self.__addExpData(res)
         """
 
 def main():
     s = SudokuWorld()
 
+    # max amount of allocated time for each experiment
+    MAX_EXPERIMENT_TIME = 600
+
     print(s.sMap)
 
     df = pd.read_csv("cases/test.csv", usecols=["question", "answer"])
 
-    for k, z in zip(s.expData.keys(), range(5)):
-        print(k, z)
-
     # test data for bruteForce
-    # for q, a in zip(df["question"], df["answer"]):
-    
-    # print(df.to_string))
+    start = time.monotonic()
+    for question, answer in zip(df["question"], df["answer"]):
+        if time.monotonic() - start < MAX_EXPERIMENT_TIME
+            s.bruteForceSolve(question, answer)
+
+    # test data for heuristics
+    start = time.monotonic()
+    for question, answer in zip(df["question"], df["answer"]):
+        if time.monotonic() - start < MAX_EXPERIMENT_TIME
+            s.heuristicsSolve(question, answer)
 
 # main func
 if __name__=="__main__":
