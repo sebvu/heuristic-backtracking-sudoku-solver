@@ -6,6 +6,8 @@
 - Jester Santos
 - Zachary Tassin
 - Mazin Safer
+- Samuel Sabu
+
 
 ## Project Description
 
