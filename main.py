@@ -1,5 +1,6 @@
 import sys
 import math
+from typing import List
 # from tkinter import *
 import pandas as pd
 
@@ -15,27 +16,28 @@ class SudokuWorld:
         self.X_COLS = 9
         self.Y_ROWS = 9
         self.sMap = [[0] * self.X_COLS] * self.Y_ROWS
-        self.expData = { "isHeuristic": [bool],
-                        "solveTimeMs": [int],
-                        "numOfOperations": [int],
-                        "numOfBacktraces": [int],
-                        "memUsage": [int] }
+        self.expData = { "isHeuristic": [],
+                        "solveTimeMs": [],
+                        "numOfOperations": [],
+                        "numOfBacktraces": [],
+                        "memUsage": [] }
 
-    # # Add a new experiment result with key ID
-    def __addExpRes(self, ID, res):
-        return
+    # Add new res list to expData
+    def __addExpRes(self, res: List):
+        for k, z in zip(self.expData.keys(), range(5)):
+            if (type(z) is bool and z == 0) or (type(z) is int):
+                self.expData[k].append(z)
+            else:
+                raise TypeError("Faulty type detected for res")
 
-    # # Verify if ID is already in expRes
-    def __isIDInExpRes(self, ID) -> bool:
-        return False
-
-    # verify position being checked before proceeding, will terminate program if not a valid position
+    # verify if position about to be accessed is even valid, if it isn't terminate program
     def __verifyPos(self, X_POS, Y_POS, funcName) -> bool:
         if X_POS < 0 or X_POS >= self.X_COLS or Y_POS < 0 or Y_POS >= self.Y_ROWS:
             sys.exit(f"value X or Y: ({X_POS},{Y_POS}) beyond boundaries, function call: {funcName}")
         else:
             return True
 
+    # verify, from X,Y position, if the board is valid.
     def __verifyGameFromPos(self, X_POS, Y_POS) -> bool:
         # get the num cell multiplier to apply to the X, Y position
         x_cell, y_cell = math.floor(X_POS / 3) + 1, math.floor(Y_POS / 3) + 1
@@ -82,18 +84,6 @@ class SudokuWorld:
 
         return True # all checks passed
 
-    # Display specific results with corresponding ID
-    def displayExpRes(self, ID):
-        return
-
-    # Display ALL results
-    def expResSummary(self):
-        return
-
-    # Clear ALL experiment results
-    def clearExpRes(self):
-        return
-
     """
     NOTE TO CONTRIBUTORS:
     
@@ -132,8 +122,14 @@ def main():
     print(s.sMap)
 
     df = pd.read_csv("cases/test.csv", usecols=["question", "answer"])
+
+    for k, z in zip(s.expData.keys(), range(5)):
+        print(k, z)
+
+    # test data for bruteForce
+    # for q, a in zip(df["question"], df["answer"]):
     
-    print(df.to_string())
+    # print(df.to_string))
 
 # main func
 if __name__=="__main__":
