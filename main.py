@@ -164,7 +164,6 @@ if __name__==__name__:
     # s.displayExpRes(3)
     #
     # print(s.sMap)
-
-    df = pd.read_csv("data.csv")
-
-    print(df.to_string())
+    df = pd.read_csv("cases/test.csv")
+    
+    print(df.iloc[:1000])
