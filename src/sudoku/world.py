@@ -43,7 +43,7 @@ class SudokuWorld:
     def __init__(self):
         self.X_COLS = 9
         self.Y_ROWS = 9
-        self.sMap = [[0] * self.X_COLS] * self.Y_ROWS
+        self.sMap = [[0] * self.X_COLS for _ in range(self.Y_ROWS)]
         self.expData = { "isHeuristic": [],
                         "solveTimeSecs": [],
                         "numOfOperations": [],
@@ -121,7 +121,7 @@ class SudokuWorld:
                         "peakMemUsage": [] }
 
     # overwrite current sMap with new q
-    # def __populateSudokuWorld(self, q)
+    # def __populateSudokuWorld(self, q):
 
     """
     NOTE TO CONTRIBUTORS:
