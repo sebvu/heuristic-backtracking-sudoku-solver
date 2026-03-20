@@ -52,9 +52,9 @@ class SudokuWorld:
 
     # Add new res list to expData
     def __addExpData(self, res: List):
-        for k, z in zip(self.expData.keys(), res):
-            if (type(z) is bool and z == 0) or (type(z) is int):
-                self.expData[k].append(z)
+        for k, z, r in zip(self.expData.keys(), range(5), res):
+            if (type(r) is bool and z == 0) or (type(r) is int):
+                self.expData[k].append(r)
             else:
                 raise TypeError("Faulty type detected for res")
 
