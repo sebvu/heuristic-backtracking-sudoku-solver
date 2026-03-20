@@ -28,7 +28,7 @@ FUNCTIONS:
     __populateSudokuWorld(q)
     - overwrites sudoku board with new initial state
 
-    __verifyTerminalCheck(self, a) -> bool:
+    __verifyTerminalReached(self, a) -> bool:
     - verify if terminal has been reached by comparing a to sMap
 
     uninformedSolve(q, a)
@@ -130,7 +130,7 @@ class SudokuWorld:
                 self.sMap[y][x] = q[y * self.Y_ROWS + x]
 
     # verify if terminal has been reached
-    def __verifyTerminalCheck(self, a) -> bool:
+    def __verifyTerminalReached(self, a) -> bool:
         for y in range(self.Y_ROWS):
             for x in range(self.X_COLS):
                 if self.sMap[y][x] != a[y * self.Y_ROWS + x]:
