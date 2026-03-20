@@ -4,6 +4,7 @@ from typing import List
 # from tkinter import *
 import pandas as pd
 import time
+import tracemalloc
 
 """
 TERMINOLOGY:
@@ -31,14 +32,6 @@ class SudokuWorld:
                 self.expData[k].append(z)
             else:
                 raise TypeError("Faulty type detected for res")
-
-    # ensure expData is cleared completely
-    def __clearExpData(self):
-        self.expData = { "isHeuristic": [],
-                        "solveTimeSecs": [],
-                        "numOfOperations": [],
-                        "numOfBacktraces": [],
-                        "memUsage": [] }
 
     # verify if position about to be accessed is even valid, if it isn't terminate program
     def __verifyPos(self, X_POS, Y_POS, funcName) -> bool:
@@ -94,6 +87,15 @@ class SudokuWorld:
 
         return True # all checks passed
 
+    # ensure expData is set properly
+    def clearExpData(self):
+        self.expData = { "isHeuristic": [],
+                        "solveTimeSecs": [],
+                        "numOfOperations": [],
+                        "numOfBacktraces": [],
+                        "memUsage": [] }
+
+
     """
     NOTE TO CONTRIBUTORS:
     
@@ -105,17 +107,25 @@ class SudokuWorld:
     # Brute force solve experiment
     def bruteForceSolve(self, q, a):
         sTime = time.monotonic()
-        """
-        implement brute force solver here
-        do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
-        self.expRes = { "isHeuristic": [bool], (this will be False for brute force)
-                        "solveTimeSecs": [int],
-                        "numOfOperations": [int],
-                        "numOfBacktraces": [int],
-                        "memUsage": [int] }
+        if q != a:
+            """
+            implement brute force solver here
+            do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
+            self.expRes = { "isHeuristic": [bool], (this will be False for brute force)
+                            "solveTimeSecs": [int],
+                            "numOfOperations": [int],
+                            "numOfBacktraces": [int],
+                            "memUsage": [int] }
+            """
+            print("do something")
 
-        vvv make sure last three values are set properly vvv
-        res = [True, time.monotonic() - sTime, 0, 0, 0]
+        _, peak, = tracemalloc.get_traced_memory()
+
+        peakInMB = peak / 1024 / 1024
+
+        """
+        vvv make sure the two 0 value are set properly vvv
+        res = [False, time.monotonic() - sTime, 0, 0, peakInMB]
         self.__addExpData(res)
         """
 
@@ -123,22 +133,32 @@ class SudokuWorld:
     # Heuristics solve experiment
     def heuristicsSolve(self, q, a):
         sTime = time.monotonic()
-        """
-        implement heuristics solver solver here
-        do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
-        self.expRes = { "isHeuristic": [bool], (this will be True for heuristics)
-                        "solveTimeSecs": [int],
-                        "numOfOperations": [int],
-                        "numOfBacktraces": [int],
-                        "memUsage": [int] }
+        if q != a:
+            """
+            implement heuristics solver solver here
+            do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
+            self.expRes = { "isHeuristic": [bool], (this will be True for heuristics)
+                            "solveTimeSecs": [int],
+                            "numOfOperations": [int],
+                            "numOfBacktraces": [int],
+                            "memUsage": [int] }
+            """
+            print("do something")
 
-        vvv make sure last three values are set properly vvv
-        res = [False, time.monotonic() - sTime, 0, 0, 0]
+        _, peak, = tracemalloc.get_traced_memory()
+
+        peakInMB = peak / 1024 / 1024
+
+        """
+        vvv make sure the two 0 value are set properly vvv
+        res = [True, time.monotonic() - sTime, 0, 0, peakInMB]
         self.__addExpData(res)
         """
 
 def main():
     s = SudokuWorld()
+
+    s.clearExpData() # ensure the dict is set correctly
 
     # max amount of allocated time for each experiment
     MAX_EXPERIMENT_TIME = 600
@@ -147,17 +167,23 @@ def main():
 
     df = pd.read_csv("cases/test.csv", usecols=["question", "answer"])
 
+    tracemalloc.start() # track memory alloc for function
+
     # test data for bruteForce
     start = time.monotonic()
     for question, answer in zip(df["question"], df["answer"]):
         if time.monotonic() - start < MAX_EXPERIMENT_TIME
+            tracemalloc.reset_peak()
             s.bruteForceSolve(question, answer)
 
     # test data for heuristics
     start = time.monotonic()
     for question, answer in zip(df["question"], df["answer"]):
         if time.monotonic() - start < MAX_EXPERIMENT_TIME
+            tracemalloc.reset_peak()
             s.heuristicsSolve(question, answer)
+
+    tracemalloc.stop() # ensure tracemalloc is finished
 
 # main func
 if __name__=="__main__":
