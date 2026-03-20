@@ -19,7 +19,7 @@ class SudokuWorld:
         self.Y_ROWS = 9
         self.sMap = [[0] * self.X_COLS] * self.Y_ROWS
         self.expData = { "isHeuristic": [],
-                        "solveTimeMs": [],
+                        "solveTimeSecs": [],
                         "numOfOperations": [],
                         "numOfBacktraces": [],
                         "memUsage": [] }
@@ -35,7 +35,7 @@ class SudokuWorld:
     # ensure expData is cleared completely
     def __clearExpData(self):
         self.expData = { "isHeuristic": [],
-                        "solveTimeMs": [],
+                        "solveTimeSecs": [],
                         "numOfOperations": [],
                         "numOfBacktraces": [],
                         "memUsage": [] }
@@ -104,34 +104,36 @@ class SudokuWorld:
 
     # Brute force solve experiment
     def bruteForceSolve(self, q, a):
+        sTime = time.monotonic()
         """
         implement brute force solver here
         do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
         self.expRes = { "isHeuristic": [bool], (this will be False for brute force)
-                        "solveTimeMs": [int],
+                        "solveTimeSecs": [int],
                         "numOfOperations": [int],
                         "numOfBacktraces": [int],
                         "memUsage": [int] }
 
-        vvv make sure values are set properly vvv
-        res = [False, 0, 0, 0, 0]
+        vvv make sure last three values are set properly vvv
+        res = [True, time.monotonic() - sTime, 0, 0, 0]
         self.__addExpData(res)
         """
 
 
     # Heuristics solve experiment
     def heuristicsSolve(self, q, a):
+        sTime = time.monotonic()
         """
         implement heuristics solver solver here
         do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
         self.expRes = { "isHeuristic": [bool], (this will be True for heuristics)
-                        "solveTimeMs": [int],
+                        "solveTimeSecs": [int],
                         "numOfOperations": [int],
                         "numOfBacktraces": [int],
                         "memUsage": [int] }
 
-        vvv make sure values are set properly vvv
-        res = [False, 0, 0, 0, 0]
+        vvv make sure last three values are set properly vvv
+        res = [False, time.monotonic() - sTime, 0, 0, 0]
         self.__addExpData(res)
         """
 
