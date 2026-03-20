@@ -95,24 +95,23 @@ class SudokuWorld:
                         "numOfBacktraces": [],
                         "peakMemUsage": [] }
 
-
     """
     NOTE TO CONTRIBUTORS:
     
-    below is the section yall should mainly be focusing on, i.e. the brute force and heuristics function
+    below is the section yall should mainly be focusing on, i.e. the uninformed function and heuristics function
 
     please if you got questions ask away yallsies
     """
 
-    # Brute force solve experiment
-    def bruteForceSolve(self, q, a):
+    # uninformed function solve experiment
+    def uninformedSolve(self, q, a):
         sTime = time.monotonic()
         numOfOps = 0
         numOfBtraces = 0
         
         if q != a: # terminal state checker
             """
-            implement brute force solver here
+            implement uninformed function solver here
             do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
             self.expRes = { "isHeuristic": [bool],
                             "solveTimeSecs": [int],
@@ -141,7 +140,7 @@ class SudokuWorld:
 
         if q != a: # terminal state checker
             """
-            implement heuristics solver solver here
+            implement heuristics solver here
             do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
             self.expRes = { "isHeuristic": [bool],
                             "solveTimeSecs": [int],
@@ -161,6 +160,25 @@ class SudokuWorld:
         res = [True, time.monotonic() - sTime, numOfOps, numOfBtraces, peakInMB]
         self.__addExpData(res)
 
+    def interpretExpData(self): # -> determine return type
+        """
+        only use self.expData
+        
+        must interpret the following for both HEURISTICS and UNINFORMED functions SEPERATELY
+        - worst, best, average solve time
+        - worst, best, avg # of ops
+        - worst, best, avg # of backtraces
+        - worst, best, avg mem usage
+
+        compare the BOTH
+        - how much % faster
+        - how much % decreased operation usage
+        - how much % # of backtraces decreased
+        - how much % of memory efficiency
+        """
+        
+        return # will return a dataframe, or some list idk up to you
+
 def main():
     s = SudokuWorld()
 
@@ -175,14 +193,14 @@ def main():
 
     tracemalloc.start() # track memory alloc for function
 
-    # test data for bruteForce
+    # test data for uninformed solve
     start = time.monotonic()
     for question, answer in zip(df["question"], df["answer"]):
         if time.monotonic() - start < MAX_EXP_TIME_IN_SECS:
             tracemalloc.reset_peak()
-            s.bruteForceSolve(question, answer)
+            s.uninformedSolve(question, answer)
 
-    # test data for heuristics
+    # test data for heuristics solve
     start = time.monotonic()
     for question, answer in zip(df["question"], df["answer"]):
         if time.monotonic() - start < MAX_EXP_TIME_IN_SECS:
