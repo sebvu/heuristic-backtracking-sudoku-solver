@@ -2,8 +2,8 @@ import time
 import tracemalloc
 import pandas as pd
 
-from sudoku.world import SudokuWorld
-from sudoku.constants import MAX_EXP_TIME_IN_SECS
+from world import SudokuWorld
+from constants import MAX_EXP_TIME_IN_SECS
 
 def main():
     s = SudokuWorld()

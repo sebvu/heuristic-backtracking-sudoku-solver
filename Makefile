@@ -13,7 +13,7 @@ endif
 
 # Run the project
 run:
-	$(SET_PYTHONPATH) $(PYTHON) -m sudoku.main
+	$(SET_PYTHONPATH) $(PYTHON) -m main
 
 # Install dependencies
 install:
