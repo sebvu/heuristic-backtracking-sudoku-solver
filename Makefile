@@ -9,11 +9,15 @@ else
 	SET_PYTHONPATH = PYTHONPATH=src
 endif
 
-.PHONY: run install
+.PHONY: run install benchmark
 
 # Run the project
 run:
 	$(SET_PYTHONPATH) $(PYTHON) -m main
+
+# Single-puzzle comparison: N runs per solver + figures/
+benchmark:
+	$(SET_PYTHONPATH) $(PYTHON) -m benchmark
 
 # Install dependencies
 install:

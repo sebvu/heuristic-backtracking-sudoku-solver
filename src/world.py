@@ -47,6 +47,10 @@ class SudokuWorld:
         self.X_COLS = 9
         self.Y_ROWS = 9
         self.sMap = [[0] * self.X_COLS for _ in range(self.Y_ROWS)]
+        # Per-solve metrics (reset at start of each solve; solvers should increment as they search)
+        self.nodes_explored = 0
+        self.backtracks = 0
+        self.solve_time = 0.0
         self.expData = { "isHeuristic": [],
                         "solveTimeSecs": [],
                         "numOfOperations": [],
@@ -149,9 +153,10 @@ class SudokuWorld:
 
     # uninformed function solve experiment
     def uninformedSolve(self, q, a):
-        sTime = time.monotonic()
-        numOfOps = 0
-        numOfBtraces = 0
+        self.nodes_explored = 0
+        self.backtracks = 0
+        self.solve_time = 0.0
+        sTime = time.perf_counter()
 
         self.__populateSudokuWorld(q)
         
@@ -164,25 +169,27 @@ class SudokuWorld:
                             "numOfOperations": [int],
                             "numOfBacktraces": [int],
                             "peakMemUsage": [int] }
+
+            Increment self.nodes_explored on each attempted cell assignment.
+            Increment self.backtracks each time the search undoes a placement.
             """
             print("do something")
 
-        _, peak, = tracemalloc.get_traced_memory()
+        _, peak = tracemalloc.get_traced_memory()
 
         peakInMB = peak / 1024 / 1024
 
-        """
-        vvv make sure numOfOps and numOfBtraces are counted vvv
-        """
-        res = [False, time.monotonic() - sTime, numOfOps, numOfBtraces, peakInMB]
+        self.solve_time = time.perf_counter() - sTime
+        res = [False, self.solve_time, self.nodes_explored, self.backtracks, peakInMB]
         self.__addExpData(res)
 
 
     # Heuristics solve experiment
     def heuristicsSolve(self, q, a):
-        sTime = time.monotonic()
-        numOfOps = 0
-        numOfBtraces = 0
+        self.nodes_explored = 0
+        self.backtracks = 0
+        self.solve_time = 0.0
+        sTime = time.perf_counter()
 
         self.__populateSudokuWorld(q)
         
@@ -195,17 +202,18 @@ class SudokuWorld:
                             "numOfOperations": [int],
                             "numOfBacktraces": [int],
                             "peakMemUsage": [int] }
+
+            Increment self.nodes_explored on each attempted cell assignment.
+            Increment self.backtracks each time the search undoes a placement.
             """
             print("do something")
 
-        _, peak, = tracemalloc.get_traced_memory()
+        _, peak = tracemalloc.get_traced_memory()
 
         peakInMB = peak / 1024 / 1024
 
-        """
-        vvv make sure numOfOps and numOfBtraces are counted vvv
-        """
-        res = [True, time.monotonic() - sTime, numOfOps, numOfBtraces, peakInMB]
+        self.solve_time = time.perf_counter() - sTime
+        res = [True, self.solve_time, self.nodes_explored, self.backtracks, peakInMB]
         self.__addExpData(res)
 
     def interpretExpData(self): # -> determine return type
@@ -226,4 +234,3 @@ class SudokuWorld:
         """
         
         return # will return a dataframe, or some list idk up to you
-
