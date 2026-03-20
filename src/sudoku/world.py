@@ -19,14 +19,17 @@ FUNCTIONS:
     __addExpData(res: List)
     - takes in a List (has to be formatted a certain way) and adds to expData
 
-    __verifyPos(X_POS, Y_POS, funcName)
+    __verifyPos(X_POS, Y_POS, funcName) -> bool:
     - helper function for identifying if an X pos and Y pos is out of bounds, and the function it was called from
 
-    __verifyGameFromPos(X_POS, Y_POS)
+    __verifyGameFromPos(X_POS, Y_POS) -> bool:
     - from the X, Y position, will check if the cell, X and Y axes are valid. good for checking when you change a value in a certain position
 
     __populateSudokuWorld(q)
     - overwrites sudoku board with new initial state
+
+    __verifyTerminalCheck(self, a) -> bool:
+    - verify if terminal has been reached by comparing a to sMap
 
     uninformedSolve(q, a)
     - takes in q (the initial sudoku world) and a (the terminal state) and solves using an uninformed algorithm, will put data, res, in expData
@@ -125,6 +128,15 @@ class SudokuWorld:
         for y in range(self.Y_ROWS):
             for x in range(self.X_COLS):
                 self.sMap[y][x] = q[y * self.Y_ROWS + x]
+
+    # verify if terminal has been reached
+    def __verifyTerminalCheck(self, a) -> bool:
+        for y in range(self.Y_ROWS):
+            for x in range(self.X_COLS):
+                if self.sMap[y][x] != a[y * self.Y_ROWS + x]:
+                   return False 
+        return True
+
     """
     NOTE TO CONTRIBUTORS:
     
