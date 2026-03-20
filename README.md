@@ -26,7 +26,7 @@ make run
 
 ## How do you contribute?
 
-To the few members on this project.. you need to install **git lfs** locally. This project uses git lfs to store the large test.csv file on this repository.
+To the few members on this project.. you need to install **git lfs** locally **on your computer** (THIS IS NOT THE SAME AS THE `git lfs install` COMMAND!). This project uses git lfs to store the large test.csv file on this repository.
 
 ```shell
 git lfs install

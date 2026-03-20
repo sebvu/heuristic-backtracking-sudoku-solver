@@ -10,6 +10,33 @@ TERMINOLOGY:
     sMap = the sudoku map
     expRes = dict to interpret experiment data
     terminalState: if sMap == current answer
+
+NOTES:
+    to edit a spot, it's self.sMap[Y][X]
+    ^ it's weird ik lol, but the Y must go first before the X.
+
+FUNCTIONS:
+    __addExpData(res: List)
+    - takes in a List (has to be formatted a certain way) and adds to expData
+
+    __verifyPos(X_POS, Y_POS, funcName)
+    - helper function for identifying if an X pos and Y pos is out of bounds, and the function it was called from
+
+    __verifyGameFromPos(X_POS, Y_POS)
+    - from the X, Y position, will check if the cell, X and Y axes are valid. good for checking when you change a value in a certain position
+
+    __populateSudokuWorld(q)
+    - overwrites sudoku board with new initial state
+
+    uninformedSolve(q, a)
+    - takes in q (the initial sudoku world) and a (the terminal state) and solves using an uninformed algorithm, will put data, res, in expData
+
+    heuristicsSolve(q, a)
+    - takes in q (the initial sudoku world) and a (the terminal state) and solves using an heuristics algorithm, will put data, res, in expData
+
+    interpretExpData()
+    - will interpret the data in expData as per requested data
+
 """
 
 class SudokuWorld:
@@ -92,6 +119,9 @@ class SudokuWorld:
                         "numOfOperations": [],
                         "numOfBacktraces": [],
                         "peakMemUsage": [] }
+
+    # overwrite current sMap with new q
+    # def __populateSudokuWorld(self, q)
 
     """
     NOTE TO CONTRIBUTORS:
