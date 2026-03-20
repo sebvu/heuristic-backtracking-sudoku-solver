@@ -23,7 +23,7 @@ class SudokuWorld:
                         "memUsage": [] }
 
     # Add new res list to expData
-    def __addExpRes(self, res: List):
+    def addExpData(self, res: List):
         for k, z in zip(self.expData.keys(), range(5)):
             if (type(z) is bool and z == 0) or (type(z) is int):
                 self.expData[k].append(z)
