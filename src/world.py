@@ -154,26 +154,56 @@ class SudokuWorld:
         numOfBtraces = 0
 
         self.__populateSudokuWorld(q)
-        
-        if not self.__verifyTerminalReached(a): # terminal state checker
-            """
-            implement uninformed function solver here
-            do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
-            self.expRes = { "isHeuristic": [bool],
-                            "solveTimeSecs": [int],
-                            "numOfOperations": [int],
-                            "numOfBacktraces": [int],
-                            "peakMemUsage": [int] }
-            """
-            print("do something")
 
-        _, peak, = tracemalloc.get_traced_memory()
+        if not self.__verifyTerminalReached(a):
+
+            def is_valid(row, col, num):
+                for x in range(self.X_COLS):
+                    if self.sMap[row][x] == num:
+                        return False
+                for y in range(self.Y_ROWS):
+                    if self.sMap[y][col] == num:
+                        return False
+                box_row, box_col = 3 * (row // 3), 3 * (col // 3)
+                for y in range(box_row, box_row + 3):
+                    for x in range(box_col, box_col + 3):
+                        if self.sMap[y][x] == num:
+                            return False
+                return True
+
+            def find_next_empty():
+                for y in range(self.Y_ROWS):
+                    for x in range(self.X_COLS):
+                        if self.sMap[y][x] == 0:
+                            return (y, x)
+                return None
+
+            def backtrack():
+                nonlocal numOfOps, numOfBtraces
+
+                pos = find_next_empty()
+                if pos is None:
+                    return True
+
+                row, col = pos
+
+                for num in range(1, 10):
+                    numOfOps += 1
+                    if is_valid(row, col, num):
+                        self.sMap[row][col] = num
+                        if backtrack():
+                            return True
+                        self.sMap[row][col] = 0
+                        numOfBtraces += 1
+
+                return False
+
+            backtrack()
+
+        _, peak = tracemalloc.get_traced_memory()
 
         peakInMB = peak / 1024 / 1024
 
-        """
-        vvv make sure numOfOps and numOfBtraces are counted vvv
-        """
         res = [False, time.monotonic() - sTime, numOfOps, numOfBtraces, peakInMB]
         self.__addExpData(res)
 
