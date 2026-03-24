@@ -3,12 +3,14 @@ import tracemalloc
 import pandas as pd
 
 from world import SudokuWorld
+from solver import SudokuSolver
 from constants import MAX_EXP_TIME_IN_SECS
 
 def main():
-    s = SudokuWorld()
+    world = SudokuWorld()
+    solver = SudokuSolver(world)
 
-    s.clearExpData() # ensure the dict is set correctly
+    world.clearExpData() # ensure the dict is set correctly
 
     df = pd.read_csv("data/test.csv", usecols=["question", "answer"])
 
@@ -19,14 +21,14 @@ def main():
     for question, answer in zip(df["question"], df["answer"]):
         if time.monotonic() - start < MAX_EXP_TIME_IN_SECS:
             tracemalloc.reset_peak()
-            s.uninformedSolve(str(question), str(answer))
+            solver.uninformedSolve(str(question), str(answer))
 
     # test data for heuristics solve
     start = time.monotonic()
     for question, answer in zip(df["question"], df["answer"]):
         if time.monotonic() - start < MAX_EXP_TIME_IN_SECS:
             tracemalloc.reset_peak()
-            s.heuristicsSolve(str(question), str(answer))
+            solver.heuristicsSolve(str(question), str(answer))
 
     tracemalloc.stop() # ensure tracemalloc is finished
 
