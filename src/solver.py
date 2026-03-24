@@ -22,6 +22,57 @@ Functions:
 class SudokuSolver:
     def __init__(self, world: SudokuWorld):
         self.world = world
+        self.numOfOps = 0
+        self.numOfBtraces = 0
+
+    def _resetMetrics(self):
+        self.numOfOps = 0
+        self.numOfBtraces = 0
+
+    def _isValid(self, row, col, num):
+        for x in range(self.world.X_COLS):
+            if self.world.sMap[row][x] == num:
+                return False
+
+        for y in range(self.world.Y_ROWS):
+            if self.world.sMap[y][col] == num:
+                return False
+
+        box_row = 3 * (row // 3)
+        box_col = 3 * (col // 3)
+        for y in range(box_row, box_row + 3):
+            for x in range(box_col, box_col + 3):
+                if self.world.sMap[y][x] == num:
+                    return False
+
+        return True
+
+    def _findNextEmpty(self):
+        for y in range(self.world.Y_ROWS):
+            for x in range(self.world.X_COLS):
+                if self.world.sMap[y][x] == 0:
+                    return (y, x)
+
+        return None
+
+    def _backtrackUninformed(self):
+        pos = self._findNextEmpty()
+        if pos is None:
+            return True
+
+        row, col = pos
+
+        for num in range(1, 10):
+            self.numOfOps += 1
+            if self._isValid(row, col, num):
+                self.world.sMap[row][col] = num
+                if self._backtrackUninformed():
+                    return True
+
+                self.world.sMap[row][col] = 0
+                self.numOfBtraces += 1
+
+        return False
 
     def _recordExperiment(self, isHeuristic, startTime, numOfOps, numOfBtraces):
         peak = tracemalloc.get_traced_memory()[1] if tracemalloc.is_tracing() else 0
@@ -32,31 +83,22 @@ class SudokuSolver:
     # uninformed function solve experiment
     def uninformedSolve(self, q, a):
         sTime = time.monotonic()
-        numOfOps = 0
-        numOfBtraces = 0
+        self._resetMetrics()
 
         self.world.populateSudokuWorld(q)
-        
-        if not self.world.verifyTerminalReached(a): # terminal state checker
-            """
-            implement uninformed function solver here
-            do not 'interpret' results, just fill in new entries for each of these (MUST FILL FOR ALL OF THEM)
-            self.expRes = { "isHeuristic": [bool],
-                            "solveTimeSecs": [int],
-                            "numOfOperations": [int],
-                            "numOfBacktraces": [int],
-                            "peakMemUsage": [int] }
-            """
-            print("do something")
+            
+        if not self.world.verifyTerminalReached(a):
+            solved = self._backtrackUninformed()
+            if not solved:
+                print("uninformed solver could not solve the puzzle")
 
-        self._recordExperiment(False, sTime, numOfOps, numOfBtraces)
+        self._recordExperiment(False, sTime, self.numOfOps, self.numOfBtraces)
 
 
     # Heuristics solve experiment
     def heuristicsSolve(self, q, a):
         sTime = time.monotonic()
-        numOfOps = 0
-        numOfBtraces = 0
+        self._resetMetrics()
 
         self.world.populateSudokuWorld(q)
         
@@ -72,7 +114,7 @@ class SudokuSolver:
             """
             print("do something")
 
-        self._recordExperiment(True, sTime, numOfOps, numOfBtraces)
+        self._recordExperiment(True, sTime, self.numOfOps, self.numOfBtraces)
 
 
 SudokuSolve = SudokuSolver
