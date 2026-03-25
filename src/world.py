@@ -1,5 +1,7 @@
 import sys
-from typing import List
+from typing import Any, Dict, List
+
+import pandas as pd
 
 """
 TERMINOLOGY:
@@ -149,10 +151,10 @@ class SudokuWorld:
     
     # Moved the solver functions to its own class in the solver.py file -JS
     
-    def interpretExpData(self): # -> determine return type
+    def interpretExpData(self) -> Dict[str, Any]:
         """
         only use self.expData
-        
+
         must interpret the following for both HEURISTICS and UNINFORMED functions SEPERATELY
         - worst, best, average solve time
         - worst, best, avg # of ops
@@ -164,6 +166,77 @@ class SudokuWorld:
         - how much % decreased operation usage
         - how much % # of backtraces decreased
         - how much % of memory efficiency
+
+        Returns:
+            dict with keys:
+            - "uninformed", "heuristic": each maps metric name -> {"min","max","mean"} (None if no rows)
+            - "comparison_pct": metric -> float percent (uninformed mean as baseline); positive means
+              heuristic is lower/faster on that metric. None if baseline missing or zero.
+            - "n_uninformed", "n_heuristic": row counts
+        Heuristic vs uninformed % are meaningful only once the heuristic solver populates data.
         """
-        
-        return # will return a dataframe, or some list idk up to you
+        keys = list(self.expData.keys())
+        lengths = {k: len(self.expData[k]) for k in keys}
+        if len(set(lengths.values())) > 1:
+            raise ValueError(f"expData columns have unequal lengths: {lengths}")
+
+        n = lengths[keys[0]]
+        if n == 0:
+            metrics = [
+                "solveTimeSecs",
+                "numOfOperations",
+                "numOfBacktraces",
+                "peakMemUsage",
+            ]
+            empty_stats = {m: {"min": None, "max": None, "mean": None} for m in metrics}
+            return {
+                "uninformed": empty_stats,
+                "heuristic": empty_stats,
+                "comparison_pct": {m: None for m in metrics},
+                "n_uninformed": 0,
+                "n_heuristic": 0,
+            }
+
+        df = pd.DataFrame(self.expData)
+        metrics = [
+            "solveTimeSecs",
+            "numOfOperations",
+            "numOfBacktraces",
+            "peakMemUsage",
+        ]
+
+        def stats_for(sub: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+            out: Dict[str, Dict[str, Any]] = {}
+            for m in metrics:
+                if sub.empty:
+                    out[m] = {"min": None, "max": None, "mean": None}
+                else:
+                    out[m] = {
+                        "min": float(sub[m].min()),
+                        "max": float(sub[m].max()),
+                        "mean": float(sub[m].mean()),
+                    }
+            return out
+
+        df_u = df.loc[~df["isHeuristic"]]
+        df_h = df.loc[df["isHeuristic"]]
+
+        uninformed = stats_for(df_u)
+        heuristic = stats_for(df_h)
+
+        comparison_pct: Dict[str, Any] = {}
+        for m in metrics:
+            u_mean = uninformed[m]["mean"]
+            h_mean = heuristic[m]["mean"]
+            if u_mean is None or h_mean is None or u_mean == 0:
+                comparison_pct[m] = None
+            else:
+                comparison_pct[m] = 100.0 * (u_mean - h_mean) / u_mean
+
+        return {
+            "uninformed": uninformed,
+            "heuristic": heuristic,
+            "comparison_pct": comparison_pct,
+            "n_uninformed": int(len(df_u)),
+            "n_heuristic": int(len(df_h)),
+        }

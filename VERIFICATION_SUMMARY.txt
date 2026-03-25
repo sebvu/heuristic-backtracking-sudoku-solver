@@ -1,0 +1,32 @@
+Verification run (interpretation + visualization deliverables)
+==============================================================
+
+Environment
+- pip install -r requirements.txt: OK
+- Runs use PYTHONPATH=src from repo root (PowerShell: $env:PYTHONPATH="src")
+
+world.interpretExpData
+- Empty expData: returns zeros and None stats: OK
+- Unequal column lengths: raises ValueError: OK
+- Synthetic rows: mean and comparison_pct match 100*(u-h)/u: OK
+- Return dict keys: uninformed, heuristic, comparison_pct, n_uninformed, n_heuristic: OK
+
+data_visualization --demo
+- Console summary + 5 PNGs under figures/: OK
+  interpret_solveTimeSecs.png, interpret_numOfOperations.png, interpret_numOfBacktraces.png,
+  interpret_peakMemUsage.png, interpret_comparison_pct.png
+
+python -m main
+- Completed without exception; printed interpretation block and 5 Wrote lines: OK
+- Note: heuristic solver is still a stub (prints "do something"); heuristic stats are not
+  representative until teammates implement heuristicsSolve in solver.py. Document this in
+  the course report.
+
+Makefile viz-demo
+- On this Windows environment, "make" was not installed. Equivalent:
+  $env:PYTHONPATH="src"; python -m data_visualization --demo
+
+Deliverables for your report
+- Copy console output from --demo or main for tables / % lines
+- Include figures/*.png from a run you want to present
+- State the heuristic caveat above if showing full main() results

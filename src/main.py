@@ -2,6 +2,7 @@ import time
 import tracemalloc
 import pandas as pd
 
+from data_visualization import format_interpretation_text, save_interpretation_figures
 from world import SudokuWorld
 from solver import SudokuSolver
 from constants import MAX_EXP_TIME_IN_SECS
@@ -31,6 +32,11 @@ def main():
             solver.heuristicsSolve(str(question), str(answer))
 
     tracemalloc.stop() # ensure tracemalloc is finished
+
+    result = world.interpretExpData()
+    print(format_interpretation_text(result))
+    for path in save_interpretation_figures(result):
+        print(f"Wrote {path}")
 
 # main func
 if __name__=="__main__":
