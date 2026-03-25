@@ -7,7 +7,7 @@
 - Zachary Tassin
 - Mazin Safer
 - Samuel Sabu
-
+- Joel Saji
 
 ## Project Description
 
