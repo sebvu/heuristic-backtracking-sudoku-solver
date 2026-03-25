@@ -26,6 +26,16 @@ make install
 make run
 ```
 
+### Interpretation demo (figures only, no CSV run)
+
+From the repo root, with `PYTHONPATH=src` set (see Makefile for how this project runs modules):
+
+```shell
+make viz-demo
+```
+
+On systems without `make`, use: `PYTHONPATH=src python -m data_visualization --demo`. This regenerates the summary printout and PNGs under `figures/`. See `docs/SUBMISSION_NOTES.md` for details.
+
 ## How do you contribute?
 
 To the few members on this project.. you need to install **git lfs** locally **on your computer** (THIS IS NOT THE SAME AS THE `git lfs install` COMMAND!). This project uses git lfs to store the large test.csv file on this repository.
