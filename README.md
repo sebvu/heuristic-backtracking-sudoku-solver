@@ -5,6 +5,7 @@
 ## Members
 - Jester Santos
 - Zachary Tassin
+- Mason Caldwell
 - Mazin Safer
 - Samuel Sabu
 - Joel Saji
