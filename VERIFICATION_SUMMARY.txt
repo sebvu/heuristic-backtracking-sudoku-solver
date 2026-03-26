@@ -28,5 +28,5 @@ Makefile viz-demo
 
 Deliverables for your report
 - Copy console output from --demo or main for tables / % lines
-- Include figures/*.png from a run you want to present
+- Regenerate figures/*.png locally (PNG files are gitignored; not stored in the repo)
 - State the heuristic caveat above if showing full main() results

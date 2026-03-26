@@ -78,7 +78,15 @@ def save_interpretation_figures(
         u_val = 0.0 if u is None else u
         h_val = 0.0 if h is None else h
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.bar(labels, [u_val, h_val], color=["#4c72b0", "#55a868"])
+        vals = [u_val, h_val]
+        ax.bar(labels, vals, color=["#4c72b0", "#55a868"])
+        ax.axhline(0, color="gray", linewidth=0.8, zorder=0)
+        lo, hi = min(vals), max(vals)
+        if lo >= 0:
+            ax.set_ylim(0, max(hi * 1.15, 1e-12))
+        else:
+            pad = (hi - lo) * 0.1 + 1e-12
+            ax.set_ylim(lo - pad, hi + pad)
         ax.set_ylabel(title)
         ax.set_title(f"{title} (mean)")
         fig.tight_layout()
@@ -94,6 +102,10 @@ def save_interpretation_figures(
         vals = [pct[k] for k in keys]
         short = [METRIC_LABELS[k].split("(")[0].strip() for k in keys]
         ax.barh(short, vals, color="#8172b3")
+        lo = min(vals)
+        hi = max(vals)
+        pad = (hi - lo) * 0.08 + 1e-6
+        ax.set_xlim(min(lo, 0) - pad, max(hi, 0) + pad)
         ax.axvline(0, color="gray", linewidth=0.8)
         ax.set_xlabel("% vs uninformed mean (positive => heuristic better)")
         ax.set_title("Heuristic vs uninformed (mean-based)")

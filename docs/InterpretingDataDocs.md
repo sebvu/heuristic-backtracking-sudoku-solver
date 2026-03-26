@@ -17,7 +17,9 @@ A single `dict` (see `SudokuWorld.interpretExpData` in `src/world.py`):
 
 ## What gets written to disk
 
-`save_interpretation_figures` writes PNGs under `figures/` (repo root by default):
+`save_interpretation_figures` writes PNGs under `figures/` (repo root by default). **`figures/*.png` is gitignored**—regenerate locally after clone; `figures/.gitkeep` keeps the folder in the repo.
+
+Benchmark (`make benchmark`) writes `mean_solve_time.png` and `mean_operations.png` (same directory, also ignored).
 
 - `interpret_solveTimeSecs.png`, `interpret_numOfOperations.png`, `interpret_numOfBacktraces.png`, `interpret_peakMemUsage.png` — bar charts of **mean** uninformed vs heuristic.
 - `interpret_comparison_pct.png` — horizontal bar chart of the `%` values.

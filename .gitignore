@@ -2,4 +2,6 @@ __pycache__/
 .venv/
 .vscode/
 
-figures/
+# Generated plots (make run, benchmark, viz-demo); keep folder via .gitkeep
+figures/*
+!figures/.gitkeep

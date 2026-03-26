@@ -36,6 +36,16 @@ make viz-demo
 
 On systems without `make`, use: `PYTHONPATH=src python -m data_visualization --demo`. This regenerates the summary printout and PNGs under `figures/`. See `docs/SUBMISSION_NOTES.md` for details.
 
+**Note:** `figures/*.png` is gitignored—each developer generates plots locally.
+
+| Command | Purpose | Main outputs under `figures/` |
+|--------|---------|-------------------------------|
+| `make run` | Full CSV experiment (time-capped) + interpretation | `interpret_*.png` |
+| `make benchmark` | Same puzzle, N runs per solver (quick sanity check) | `mean_solve_time.png`, `mean_operations.png` |
+| `make viz-demo` | Synthetic data only; tests interpret + plots | `interpret_*.png` |
+
+`viz-demo` is not the main experiment. `benchmark` is not a rewrite of `make run`—it is a small, repeatable single-row comparison.
+
 ## How do you contribute?
 
 To the few members on this project.. you need to install **git lfs** locally **on your computer** (THIS IS NOT THE SAME AS THE `git lfs install` COMMAND!). This project uses git lfs to store the large test.csv file on this repository.
