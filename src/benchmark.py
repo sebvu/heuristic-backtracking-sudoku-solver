@@ -15,6 +15,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib import ticker
 
 from solver import SudokuSolver
 from world import SudokuWorld
@@ -22,6 +23,19 @@ from world import SudokuWorld
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CSV = REPO_ROOT / "data" / "test.csv"
 FIGURES_DIR = REPO_ROOT / "figures"
+LOG_METRICS = {"operations", "backtracks"}
+
+
+def _plain_axis_formatter(decimals: int = 3) -> ticker.FuncFormatter:
+    def _fmt(x: float, _pos: int) -> str:
+        if abs(x) >= 1000:
+            if abs(x - round(x)) < 1e-12:
+                return f"{int(round(x)):,}"
+            return f"{x:,.1f}"
+        s = f"{x:.{decimals}f}".rstrip("0").rstrip(".")
+        return "0" if s in {"", "-0"} else s
+
+    return ticker.FuncFormatter(_fmt)
 
 
 def _last_run_metrics(world: SudokuWorld) -> dict[str, float]:
@@ -122,6 +136,7 @@ def _bar_chart_baseline(ax, values: list[float]) -> None:
     else:
         pad = (hi - lo) * 0.1 + 1e-9
         ax.set_ylim(lo - pad, hi + pad)
+    ax.yaxis.set_major_formatter(_plain_axis_formatter())
 
 
 def plot_bars(

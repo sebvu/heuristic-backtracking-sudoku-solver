@@ -16,6 +16,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib import ticker
 
 from world import SudokuWorld
 
@@ -31,6 +32,46 @@ METRIC_LABELS = {
 
 DEFAULT_CASES = 300
 DEFAULT_SUMMARY_PATH = DEFAULT_FIGURES_DIR / "summary.txt"
+LOG_METRICS = {"numOfOperations", "numOfBacktraces"}
+
+
+def _format_number(x: float | int | None, *, decimals: int = 6) -> str:
+    if x is None:
+        return "N/A"
+    v = float(x)
+    if abs(v) >= 1000:
+        if abs(v - round(v)) < 1e-12:
+            return f"{int(round(v)):,}"
+        return f"{v:,.2f}"
+    s = f"{v:.{decimals}f}".rstrip("0").rstrip(".")
+    return "0" if s in {"", "-0"} else s
+
+
+def _plain_axis_formatter(decimals: int = 3) -> ticker.FuncFormatter:
+    def _fmt(x: float, _pos: int) -> str:
+        if abs(x) >= 1000:
+            if abs(x - round(x)) < 1e-12:
+                return f"{int(round(x)):,}"
+            return f"{x:,.1f}"
+        s = f"{x:.{decimals}f}".rstrip("0").rstrip(".")
+        return "0" if s in {"", "-0"} else s
+
+    return ticker.FuncFormatter(_fmt)
+
+
+def _apply_metric_scale(ax, metric: str) -> str:
+    if metric in LOG_METRICS:
+        ax.set_yscale("log")
+        ax.yaxis.set_major_locator(ticker.LogLocator(base=10))
+        ax.yaxis.set_major_formatter(
+            ticker.FuncFormatter(
+                lambda y, _pos: f"{int(y):,}" if y >= 1 and abs(y - round(y)) < 1e-12 else ""
+            )
+        )
+        return "log scale"
+    ax.set_yscale("linear")
+    ax.yaxis.set_major_formatter(_plain_axis_formatter())
+    return "linear scale"
 
 
 def write_summary_txt(text: str, *, path: Path = DEFAULT_SUMMARY_PATH) -> Path:
@@ -67,7 +108,7 @@ def save_distribution_figures(
     out_dir: Path = DEFAULT_FIGURES_DIR,
     cases: int = DEFAULT_CASES,
 ) -> list[Path]:
-    """Boxplots (log-y) per metric for first N aligned cases."""
+    """Boxplots per metric (log only for operations/backtraces)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     df = _expdata_frame(world)
     u, h, n = _split_cases(df, max_cases=cases)
@@ -79,12 +120,12 @@ def save_distribution_figures(
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.boxplot(
             [u[m].dropna().values, h[m].dropna().values],
-            labels=["Uninformed", "Heuristic"],
+            tick_labels=["Uninformed", "Heuristic"],
             showfliers=False,
         )
-        ax.set_yscale("log")
+        scale_label = _apply_metric_scale(ax, m)
         ax.set_ylabel(title)
-        ax.set_title(f"{title} distribution (first {n} cases, log scale)")
+        ax.set_title(f"{title} distribution (first {n} cases, {scale_label})")
         fig.tight_layout()
         path = out_dir / f"dist_{m}.png"
         fig.savefig(path, dpi=150, bbox_inches="tight")
@@ -103,7 +144,7 @@ def save_trend_figures_log(
     out_dir: Path = DEFAULT_FIGURES_DIR,
     cases: int = DEFAULT_CASES,
 ) -> list[Path]:
-    """Cumulative mean trends per metric with log-y scale."""
+    """Cumulative mean trends (log only for operations/backtraces)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     df = _expdata_frame(world)
     u, h, n = _split_cases(df, max_cases=cases)
@@ -116,10 +157,10 @@ def save_trend_figures_log(
         fig, ax = plt.subplots(figsize=(7, 4))
         ax.plot(x, _cummean(u[m]).values, label="Uninformed", color="#4c72b0")
         ax.plot(x, _cummean(h[m]).values, label="Heuristic", color="#55a868")
-        ax.set_yscale("log")
+        scale_label = _apply_metric_scale(ax, m)
         ax.set_xlabel("Case # (aligned)")
         ax.set_ylabel(f"Cumulative mean {title}")
-        ax.set_title(f"Cumulative mean over cases (log scale) — {title}")
+        ax.set_title(f"Cumulative mean over cases ({scale_label}) — {title}")
         ax.legend()
         fig.tight_layout()
         path = out_dir / f"trend_cummean_{m}.png"
@@ -157,6 +198,7 @@ def save_trend_figures_pct_improvement(
         ax.set_xlabel("Case # (aligned)")
         ax.set_ylabel("% improvement vs uninformed (cumulative mean)")
         ax.set_title(f"% improvement over time — {title}")
+        ax.yaxis.set_major_formatter(_plain_axis_formatter(decimals=2))
         finite = pct.dropna()
         if not finite.empty:
             lo = float(finite.min())
@@ -205,7 +247,10 @@ def format_interpretation_text(result: dict[str, Any]) -> str:
                 lines.append(f"  {title}: (no data)")
             else:
                 lines.append(
-                    f"  {title}: min={s['min']:.6g} max={s['max']:.6g} mean={s['mean']:.6g}"
+                    "  "
+                    + f"{title}: min={_format_number(s['min'])} "
+                    + f"max={_format_number(s['max'])} "
+                    + f"mean={_format_number(s['mean'])}"
                 )
     lines.append("\nHeuristic vs uninformed (mean baseline %; positive => heuristic lower/faster):")
     for m, title in METRIC_LABELS.items():
@@ -250,6 +295,7 @@ def save_interpretation_figures(
             ax.set_ylim(lo - pad, hi + pad)
         ax.set_ylabel(title)
         ax.set_title(f"{title} (mean)")
+        ax.yaxis.set_major_formatter(_plain_axis_formatter())
         fig.tight_layout()
         path = out_dir / f"interpret_{m}.png"
         fig.savefig(path, dpi=150, bbox_inches="tight")
@@ -270,6 +316,7 @@ def save_interpretation_figures(
         ax.axvline(0, color="gray", linewidth=0.8)
         ax.set_xlabel("% vs uninformed mean (positive => heuristic better)")
         ax.set_title("Heuristic vs uninformed (mean-based)")
+        ax.xaxis.set_major_formatter(_plain_axis_formatter(decimals=2))
         fig.tight_layout()
         path = out_dir / "interpret_comparison_pct.png"
         fig.savefig(path, dpi=150, bbox_inches="tight")

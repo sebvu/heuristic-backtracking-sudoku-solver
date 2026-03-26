@@ -34,7 +34,7 @@ From the repo root, with `PYTHONPATH=src` set (see Makefile for how this project
 make viz-demo
 ```
 
-On systems without `make`, use: `PYTHONPATH=src python -m data_visualization --demo`. This regenerates the summary printout and PNGs under `figures/`. See `docs/SUBMISSION_NOTES.md` for details.
+On systems without `make`, use: `PYTHONPATH=src python -m data_visualization --demo`. This regenerates the summary printout and PNGs under `figures/`. See `docs/InterpretingDataDocs.md` for details.
 
 **Note:** `figures/*.png` is gitignored—each developer generates plots locally.
 
