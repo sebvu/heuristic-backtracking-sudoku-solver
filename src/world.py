@@ -180,6 +180,7 @@ class SudokuWorld:
         if len(set(lengths.values())) > 1:
             raise ValueError(f"expData columns have unequal lengths: {lengths}")
 
+        # return empty stats if there is no valid expdata
         n = lengths[keys[0]]
         if n == 0:
             metrics = [
@@ -205,6 +206,7 @@ class SudokuWorld:
             "peakMemUsage",
         ]
 
+        # per metric, solve for min, max and mean if applicable
         def stats_for(sub: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
             out: Dict[str, Dict[str, Any]] = {}
             for m in metrics:
@@ -224,6 +226,8 @@ class SudokuWorld:
         uninformed = stats_for(df_u)
         heuristic = stats_for(df_h)
 
+        # actual comparison of both means
+        # calc pct of how much heuristic mean is better than uninformed mean
         comparison_pct: Dict[str, Any] = {}
         for m in metrics:
             u_mean = uninformed[m]["mean"]
