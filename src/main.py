@@ -2,7 +2,12 @@ import time
 import tracemalloc
 import pandas as pd
 
-from data_visualization import format_interpretation_text, save_interpretation_figures
+from data_visualization import (
+    DEFAULT_CASES,
+    DEFAULT_FIGURES_DIR,
+    DEFAULT_SUMMARY_PATH,
+    write_all_outputs,
+)
 from world import SudokuWorld
 from solver import SudokuSolver
 from constants import MAX_EXP_TIME_IN_SECS
@@ -33,9 +38,15 @@ def main():
 
     tracemalloc.stop() # ensure tracemalloc is finished
 
-    result = world.interpretExpData()
-    print(format_interpretation_text(result))
-    for path in save_interpretation_figures(result):
+    text, paths, summary_file = write_all_outputs(
+        world,
+        out_dir=DEFAULT_FIGURES_DIR,
+        cases=DEFAULT_CASES,
+        summary_path=DEFAULT_SUMMARY_PATH,
+    )
+    print(text)
+    print(f"Wrote {summary_file}")
+    for path in paths:
         print(f"Wrote {path}")
 
 # main func

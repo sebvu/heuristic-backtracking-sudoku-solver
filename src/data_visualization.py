@@ -15,6 +15,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from world import SudokuWorld
 
@@ -27,6 +28,166 @@ METRIC_LABELS = {
     "numOfBacktraces": "Backtraces",
     "peakMemUsage": "Peak memory (MB)",
 }
+
+DEFAULT_CASES = 300
+DEFAULT_SUMMARY_PATH = DEFAULT_FIGURES_DIR / "summary.txt"
+
+
+def write_summary_txt(text: str, *, path: Path = DEFAULT_SUMMARY_PATH) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def _expdata_frame(world: SudokuWorld) -> pd.DataFrame:
+    ed = world.expData
+    df = pd.DataFrame(ed)
+    if df.empty:
+        return df
+    for col in ("solveTimeSecs", "numOfOperations", "numOfBacktraces", "peakMemUsage"):
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df
+
+
+def _split_cases(df: pd.DataFrame, *, max_cases: int) -> tuple[pd.DataFrame, pd.DataFrame, int]:
+    """Return (uninformed, heuristic, n_used) aligned by case index."""
+    if df.empty:
+        return df, df, 0
+    u = df.loc[~df["isHeuristic"]].copy()
+    h = df.loc[df["isHeuristic"]].copy()
+    u["case"] = range(1, len(u) + 1)
+    h["case"] = range(1, len(h) + 1)
+    n = min(len(u), len(h), max_cases)
+    return u.iloc[:n].reset_index(drop=True), h.iloc[:n].reset_index(drop=True), int(n)
+
+
+def save_distribution_figures(
+    world: SudokuWorld,
+    *,
+    out_dir: Path = DEFAULT_FIGURES_DIR,
+    cases: int = DEFAULT_CASES,
+) -> list[Path]:
+    """Boxplots (log-y) per metric for first N aligned cases."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df = _expdata_frame(world)
+    u, h, n = _split_cases(df, max_cases=cases)
+    written: list[Path] = []
+    if n == 0:
+        return written
+
+    for m, title in METRIC_LABELS.items():
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.boxplot(
+            [u[m].dropna().values, h[m].dropna().values],
+            labels=["Uninformed", "Heuristic"],
+            showfliers=False,
+        )
+        ax.set_yscale("log")
+        ax.set_ylabel(title)
+        ax.set_title(f"{title} distribution (first {n} cases, log scale)")
+        fig.tight_layout()
+        path = out_dir / f"dist_{m}.png"
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        written.append(path)
+    return written
+
+
+def _cummean(xs: pd.Series) -> pd.Series:
+    return xs.expanding(min_periods=1).mean()
+
+
+def save_trend_figures_log(
+    world: SudokuWorld,
+    *,
+    out_dir: Path = DEFAULT_FIGURES_DIR,
+    cases: int = DEFAULT_CASES,
+) -> list[Path]:
+    """Cumulative mean trends per metric with log-y scale."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df = _expdata_frame(world)
+    u, h, n = _split_cases(df, max_cases=cases)
+    written: list[Path] = []
+    if n == 0:
+        return written
+
+    x = range(1, n + 1)
+    for m, title in METRIC_LABELS.items():
+        fig, ax = plt.subplots(figsize=(7, 4))
+        ax.plot(x, _cummean(u[m]).values, label="Uninformed", color="#4c72b0")
+        ax.plot(x, _cummean(h[m]).values, label="Heuristic", color="#55a868")
+        ax.set_yscale("log")
+        ax.set_xlabel("Case # (aligned)")
+        ax.set_ylabel(f"Cumulative mean {title}")
+        ax.set_title(f"Cumulative mean over cases (log scale) — {title}")
+        ax.legend()
+        fig.tight_layout()
+        path = out_dir / f"trend_cummean_{m}.png"
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        written.append(path)
+    return written
+
+
+def save_trend_figures_pct_improvement(
+    world: SudokuWorld,
+    *,
+    out_dir: Path = DEFAULT_FIGURES_DIR,
+    cases: int = DEFAULT_CASES,
+) -> list[Path]:
+    """Cumulative mean % improvement vs uninformed baseline over cases."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df = _expdata_frame(world)
+    u, h, n = _split_cases(df, max_cases=cases)
+    written: list[Path] = []
+    if n == 0:
+        return written
+
+    x = range(1, n + 1)
+    for m, title in METRIC_LABELS.items():
+        u_c = _cummean(u[m])
+        h_c = _cummean(h[m])
+        pct = pd.Series([None] * n, dtype="float64")
+        mask = u_c != 0
+        pct.loc[mask] = 100.0 * (u_c.loc[mask] - h_c.loc[mask]) / u_c.loc[mask]
+
+        fig, ax = plt.subplots(figsize=(7, 4))
+        ax.plot(x, pct.values, color="#8172b3")
+        ax.axhline(0, color="gray", linewidth=0.8)
+        ax.set_xlabel("Case # (aligned)")
+        ax.set_ylabel("% improvement vs uninformed (cumulative mean)")
+        ax.set_title(f"% improvement over time — {title}")
+        finite = pct.dropna()
+        if not finite.empty:
+            lo = float(finite.min())
+            hi = float(finite.max())
+            pad = (hi - lo) * 0.1 + 1e-6
+            ax.set_ylim(min(lo, 0) - pad, max(hi, 0) + pad)
+        fig.tight_layout()
+        path = out_dir / f"trend_pct_improvement_{m}.png"
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        written.append(path)
+    return written
+
+
+def write_all_outputs(
+    world: SudokuWorld,
+    *,
+    out_dir: Path = DEFAULT_FIGURES_DIR,
+    cases: int = DEFAULT_CASES,
+    summary_path: Path = DEFAULT_SUMMARY_PATH,
+) -> tuple[str, list[Path], Path]:
+    """One-stop: interpret, write summary.txt, and write all figures."""
+    result = world.interpretExpData()
+    text = format_interpretation_text(result)
+    summary_file = write_summary_txt(text, path=summary_path)
+    written: list[Path] = []
+    written += save_interpretation_figures(result, out_dir=out_dir)
+    written += save_distribution_figures(world, out_dir=out_dir, cases=cases)
+    written += save_trend_figures_log(world, out_dir=out_dir, cases=cases)
+    written += save_trend_figures_pct_improvement(world, out_dir=out_dir, cases=cases)
+    return text, written, summary_file
 
 
 def format_interpretation_text(result: dict[str, Any]) -> str:
@@ -137,18 +298,35 @@ def main() -> None:
         help="Run synthetic expData and print/save (no solver run).",
     )
     parser.add_argument(
+        "--cases",
+        type=int,
+        default=DEFAULT_CASES,
+        help=f"Aligned cases to use for dist/trend plots (default: {DEFAULT_CASES})",
+    )
+    parser.add_argument(
         "--figures-dir",
         type=Path,
         default=DEFAULT_FIGURES_DIR,
         help="Output directory for PNGs",
     )
+    parser.add_argument(
+        "--summary-path",
+        type=Path,
+        default=DEFAULT_SUMMARY_PATH,
+        help="Path for summary.txt output",
+    )
     args = parser.parse_args()
 
     if args.demo:
         world = _demo_synthetic_world()
-        result = world.interpretExpData()
-        print(format_interpretation_text(result))
-        paths = save_interpretation_figures(result, out_dir=args.figures_dir)
+        text, paths, summary_file = write_all_outputs(
+            world,
+            out_dir=args.figures_dir,
+            cases=int(args.cases),
+            summary_path=args.summary_path,
+        )
+        print(text)
+        print(f"Wrote {summary_file}")
         for p in paths:
             print(f"Wrote {p}")
     else:
