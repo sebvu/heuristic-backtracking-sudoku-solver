@@ -26,19 +26,38 @@ class SudokuSolver:
         self.world = world
         self.numOfOps = 0
         self.numOfBtraces = 0
+        self.numOfNodesExplored = 0
 
     # Helper function to reset numOfOps and numOfBtraces to 0 before each solve
     def _resetMetrics(self):
         self.numOfOps = 0
         self.numOfBtraces = 0
+        self.numOfNodesExplored = 0
+        self.world.nodes_explored = 0
+        self.world.backtracks = 0
+        self.world.solve_time = 0.0
+
+    def _countOperation(self, amount=1):
+        self.numOfOps += amount
+
+    def _placeValue(self, row, col, num):
+        self._countOperation()
+        self.numOfNodesExplored += 1
+        self.world.sMap[row][col] = num
+
+    def _clearValue(self, row, col):
+        self._countOperation()
+        self.world.sMap[row][col] = 0
 
     # Helper function to check if a number can be placed in a given position according to sudoku rules
     def _isValid(self, row, col, num):
         for x in range(self.world.X_COLS):
+            self._countOperation()
             if self.world.sMap[row][x] == num:
                 return False
 
         for y in range(self.world.Y_ROWS):
+            self._countOperation()
             if self.world.sMap[y][col] == num:
                 return False
 
@@ -46,6 +65,7 @@ class SudokuSolver:
         box_col = 3 * (col // 3)
         for y in range(box_row, box_row + 3):
             for x in range(box_col, box_col + 3):
+                self._countOperation()
                 if self.world.sMap[y][x] == num:
                     return False
 
@@ -56,6 +76,7 @@ class SudokuSolver:
     def _findNextEmpty(self):
         for y in range(self.world.Y_ROWS):
             for x in range(self.world.X_COLS):
+                self._countOperation()
                 if self.world.sMap[y][x] == 0:
                     return (y, x)
 
@@ -70,52 +91,74 @@ class SudokuSolver:
         row, col = pos
 
         for num in range(1, 10):
-            self.numOfOps += 1
+            self._countOperation()
             if self._isValid(row, col, num):
-                self.world.sMap[row][col] = num
+                self._placeValue(row, col, num)
                 if self._backtrackUninformed():
                     return True
 
-                self.world.sMap[row][col] = 0
+                self._clearValue(row, col)
                 self.numOfBtraces += 1
 
         return False
 
     # Helper function to record experiment data into world.expData
-    def _recordExperiment(self, isHeuristic, startTime, numOfOps, numOfBtraces):
-        peak = tracemalloc.get_traced_memory()[1] if tracemalloc.is_tracing() else 0
-        peakInMB = peak / 1024 / 1024
-        res = [isHeuristic, time.monotonic() - startTime, numOfOps, numOfBtraces, peakInMB]
+    def _recordExperiment(self, isHeuristic, startTime, peakInMB):
+        solve_time = time.monotonic() - startTime
+        self.world.nodes_explored = self.numOfNodesExplored
+        self.world.backtracks = self.numOfBtraces
+        self.world.solve_time = solve_time
+        res = [
+            isHeuristic,
+            solve_time,
+            self.numOfOps,
+            self.numOfBtraces,
+            peakInMB,
+            self.numOfNodesExplored,
+        ]
         self.world.addExpData(res)
 
     # uninformed function solve experiment
     def uninformedSolve(self, q, a):
+        tracemalloc.start()
+
         sTime = time.monotonic()
         self._resetMetrics()
-
         self.world.populateSudokuWorld(q)
-            
-        if not self.world.verifyTerminalReached(a):
-            solved = self._backtrackUninformed()
-            if not solved:
-                print("uninformed solver could not solve the puzzle")
 
-        self._recordExperiment(False, sTime, self.numOfOps, self.numOfBtraces)
+        try:
+            if not self.world.verifyTerminalReached(a):
+                solved = self._backtrackUninformed()
+                if not solved:
+                    print("uninformed solver could not solve the puzzle")
+
+            if not self.world.verifyTerminalReached(a):
+                raise ValueError("uninformed solver did not reach the expected terminal state")
+        finally:
+            peak = tracemalloc.get_traced_memory()[1]
+            tracemalloc.stop()
+
+        peakInMB = peak / 1024 / 1024
+
+        self._recordExperiment(False, sTime, peakInMB)
 
 
     # Helper function to get the set of legal values for a given empty cell
     def _getLegalValues(self, row, col):
         used = set()
         for x in range(self.world.X_COLS):
+            self._countOperation()
             if self.world.sMap[row][x] != 0:
                 used.add(self.world.sMap[row][x])
         for y in range(self.world.Y_ROWS):
+            self._countOperation()
             if self.world.sMap[y][col] != 0:
                 used.add(self.world.sMap[y][col])
         box_row = 3 * (row // 3)
         box_col = 3 * (col // 3)
         for y in range(box_row, box_row + 3):
             for x in range(box_col, box_col + 3):
+                self._countOperation()
                 if self.world.sMap[y][x] != 0:
                     used.add(self.world.sMap[y][x])
         return set(range(1, 10)) - used
@@ -126,6 +169,7 @@ class SudokuSolver:
         best_pos = None
         for y in range(self.world.Y_ROWS):
             for x in range(self.world.X_COLS):
+                self._countOperation()
                 if self.world.sMap[y][x] == 0:
                     count = len(self._getLegalValues(y, x))
                     if count == 0:
@@ -139,18 +183,27 @@ class SudokuSolver:
     def _countEliminations(self, row, col, num):
         peers = set()
         for x in range(self.world.X_COLS):
+            self._countOperation()
             if self.world.sMap[row][x] == 0 and x != col:
                 peers.add((row, x))
         for y in range(self.world.Y_ROWS):
+            self._countOperation()
             if self.world.sMap[y][col] == 0 and y != row:
                 peers.add((y, col))
         box_row = 3 * (row // 3)
         box_col = 3 * (col // 3)
         for y in range(box_row, box_row + 3):
             for x in range(box_col, box_col + 3):
+                self._countOperation()
                 if self.world.sMap[y][x] == 0 and (y, x) != (row, col):
                     peers.add((y, x))
-        return sum(1 for (pr, pc) in peers if num in self._getLegalValues(pr, pc))
+
+        eliminations = 0
+        for pr, pc in peers:
+            self._countOperation()
+            if num in self._getLegalValues(pr, pc):
+                eliminations += 1
+        return eliminations
 
     # Backtracking algorithm using MRV (cell selection) and LCV (value ordering)
     def _backtrackHeuristic(self):
@@ -165,25 +218,33 @@ class SudokuSolver:
         ordered_values = sorted(legal_values, key=lambda num: self._countEliminations(row, col, num))
 
         for num in ordered_values:
-            self.numOfOps += 1
-            self.world.sMap[row][col] = num
+            self._countOperation()
+            self._placeValue(row, col, num)
             if self._backtrackHeuristic():
                 return True
-            self.world.sMap[row][col] = 0
+            self._clearValue(row, col)
             self.numOfBtraces += 1
 
         return False
 
     # Heuristics solve experiment
     def heuristicsSolve(self, q, a):
+        tracemalloc.start()
         sTime = time.monotonic()
         self._resetMetrics()
-
         self.world.populateSudokuWorld(q)
+        try:
+            if not self.world.verifyTerminalReached(a):
+                solved = self._backtrackHeuristic()
+                if not solved:
+                    print("heuristic solver could not solve the puzzle")
 
-        if not self.world.verifyTerminalReached(a):
-            solved = self._backtrackHeuristic()
-            if not solved:
-                print("heuristic solver could not solve the puzzle")
+            if not self.world.verifyTerminalReached(a):
+                raise ValueError("heuristic solver did not reach the expected terminal state")
+        finally:
+            peak = tracemalloc.get_traced_memory()[1]
+            tracemalloc.stop()
 
-        self._recordExperiment(True, sTime, self.numOfOps, self.numOfBtraces)
+        peakInMB = peak / 1024 / 1024
+
+        self._recordExperiment(True, sTime, peakInMB)

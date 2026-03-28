@@ -47,12 +47,27 @@ class SudokuWorld:
                         "solveTimeSecs": [],
                         "numOfOperations": [],
                         "numOfBacktraces": [],
-                        "peakMemUsage": [] }
+                        "peakMemUsage": [],
+                        "numOfNodesExplored": [] }
 
     # Add new res list to expData
     def addExpData(self, res: List):
-        for k, z, r in zip(self.expData.keys(), range(5), res):
-            if (type(r) is bool and z == 0) or (type(r) is int or type(r) is float):
+        keys = [
+            "isHeuristic",
+            "solveTimeSecs",
+            "numOfOperations",
+            "numOfBacktraces",
+            "peakMemUsage",
+            "numOfNodesExplored",
+        ]
+
+        if len(res) != len(keys):
+            raise ValueError(f"Expected {len(keys)} values for res, got {len(res)}: {res}")
+
+        for idx, (k, r) in enumerate(zip(keys, res)):
+            if idx == 0 and type(r) is bool:
+                self.expData[k].append(r)
+            elif idx > 0 and (type(r) is int or type(r) is float):
                 self.expData[k].append(r)
             else:
                 raise TypeError(f"Faulty type detected for res {res}")
@@ -117,7 +132,8 @@ class SudokuWorld:
                         "solveTimeSecs": [],
                         "numOfOperations": [],
                         "numOfBacktraces": [],
-                        "peakMemUsage": [] }
+                        "peakMemUsage": [],
+                        "numOfNodesExplored": [] }
 
     # overwrite current sMap with new q, ENSURE IT IS ALL INTS
     def populateSudokuWorld(self, q):
@@ -158,12 +174,14 @@ class SudokuWorld:
         must interpret the following for both HEURISTICS and UNINFORMED functions SEPERATELY
         - worst, best, average solve time
         - worst, best, avg # of ops
+        - worst, best, avg # of nodes explored
         - worst, best, avg # of backtraces
         - worst, best, avg mem usage
 
         compare the BOTH
         - how much % faster
         - how much % decreased operation usage
+        - how much % decreased nodes explored
         - how much % # of backtraces decreased
         - how much % of memory efficiency
 
@@ -188,6 +206,7 @@ class SudokuWorld:
                 "numOfOperations",
                 "numOfBacktraces",
                 "peakMemUsage",
+                "numOfNodesExplored",
             ]
             empty_stats = {m: {"min": None, "max": None, "mean": None} for m in metrics}
             return {
@@ -204,6 +223,7 @@ class SudokuWorld:
             "numOfOperations",
             "numOfBacktraces",
             "peakMemUsage",
+            "numOfNodesExplored",
         ]
 
         # per metric, solve for min, max and mean if applicable

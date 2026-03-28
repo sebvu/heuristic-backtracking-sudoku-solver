@@ -6,7 +6,6 @@ Run from repository root: make benchmark  (or: set PYTHONPATH=src && python -m b
 import argparse
 import os
 import statistics
-import tracemalloc
 from pathlib import Path
 from typing import Any
 
@@ -23,9 +22,6 @@ from world import SudokuWorld
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CSV = REPO_ROOT / "data" / "test.csv"
 FIGURES_DIR = REPO_ROOT / "figures"
-LOG_METRICS = {"operations", "backtracks"}
-
-
 def _plain_axis_formatter(decimals: int = 3) -> ticker.FuncFormatter:
     def _fmt(x: float, _pos: int) -> str:
         if abs(x) >= 1000:
@@ -49,6 +45,7 @@ def _last_run_metrics(world: SudokuWorld) -> dict[str, float]:
         "operations": float(ed["numOfOperations"][i]),
         "backtracks": float(ed["numOfBacktraces"][i]),
         "peak_mb": float(ed["peakMemUsage"][i]),
+        "nodes_explored": float(ed["numOfNodesExplored"][i]),
     }
 
 
@@ -56,7 +53,6 @@ def _trial(question: str, answer: str, *, heuristic: bool) -> dict[str, float]:
     world = SudokuWorld()
     solver = SudokuSolver(world)
     world.clearExpData()
-    tracemalloc.reset_peak()
     if heuristic:
         solver.heuristicsSolve(str(question), str(answer))
     else:
@@ -72,14 +68,10 @@ def run_battery(
 ) -> tuple[list[dict[str, float]], list[dict[str, float]]]:
     uninformed_rows: list[dict[str, float]] = []
     heuristic_rows: list[dict[str, float]] = []
-    tracemalloc.start()
-    try:
-        for _ in range(n_runs):
-            uninformed_rows.append(_trial(question, answer, heuristic=False))
-        for _ in range(n_runs):
-            heuristic_rows.append(_trial(question, answer, heuristic=True))
-    finally:
-        tracemalloc.stop()
+    for _ in range(n_runs):
+        uninformed_rows.append(_trial(question, answer, heuristic=False))
+    for _ in range(n_runs):
+        heuristic_rows.append(_trial(question, answer, heuristic=True))
     return uninformed_rows, heuristic_rows
 
 
@@ -101,6 +93,8 @@ def summarize(
     h_o = [r["operations"] for r in heuristic_rows]
     u_b = [r["backtracks"] for r in uninformed_rows]
     h_b = [r["backtracks"] for r in heuristic_rows]
+    u_n = [r["nodes_explored"] for r in uninformed_rows]
+    h_n = [r["nodes_explored"] for r in heuristic_rows]
 
     def pct_improvement(baseline: float, improved: float) -> float | None:
         if baseline == 0:
@@ -114,6 +108,8 @@ def summarize(
             "mean_operations": _mean(u_o),
             "stdev_operations": _stdev(u_o),
             "mean_backtracks": _mean(u_b),
+            "mean_nodes_explored": _mean(u_n),
+            "stdev_nodes_explored": _stdev(u_n),
         },
         "heuristic": {
             "mean_time": _mean(h_t),
@@ -121,10 +117,13 @@ def summarize(
             "mean_operations": _mean(h_o),
             "stdev_operations": _stdev(h_o),
             "mean_backtracks": _mean(h_b),
+            "mean_nodes_explored": _mean(h_n),
+            "stdev_nodes_explored": _stdev(h_n),
         },
         "pct_faster_time": pct_improvement(_mean(u_t), _mean(h_t)),
         "pct_fewer_operations": pct_improvement(_mean(u_o), _mean(h_o)),
         "pct_fewer_backtracks": pct_improvement(_mean(u_b), _mean(h_b)),
+        "pct_fewer_nodes_explored": pct_improvement(_mean(u_n), _mean(h_n)),
     }
 
 
@@ -144,7 +143,7 @@ def plot_bars(
     *,
     n_runs: int,
     out_dir: Path,
-) -> tuple[Path, Path]:
+) -> tuple[Path, Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     labels = ["Uninformed", "Heuristic"]
     u = summary["uninformed"]
@@ -172,7 +171,18 @@ def plot_bars(
     fig.savefig(p_ops, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
-    return p_time, p_ops
+    fig, ax = plt.subplots(figsize=(6, 4))
+    nodes = [u["mean_nodes_explored"], h["mean_nodes_explored"]]
+    ax.bar(labels, nodes, color=["#4c72b0", "#55a868"])
+    _bar_chart_baseline(ax, nodes)
+    ax.set_ylabel("Mean nodes explored")
+    ax.set_title(f"Search tree size (mean of {n_runs} runs, same puzzle)")
+    fig.tight_layout()
+    p_nodes = out_dir / "mean_nodes_explored.png"
+    fig.savefig(p_nodes, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+    return p_time, p_ops, p_nodes
 
 
 def load_puzzle(csv_path: Path, row_index: int) -> tuple[str, str]:
@@ -212,6 +222,8 @@ def main() -> None:
     print("  Heuristic  - mean time:", summary["heuristic"]["mean_time"], "s")
     print("  Uninformed - mean operations:", summary["uninformed"]["mean_operations"])
     print("  Heuristic  - mean operations:", summary["heuristic"]["mean_operations"])
+    print("  Uninformed - mean nodes explored:", summary["uninformed"]["mean_nodes_explored"])
+    print("  Heuristic  - mean nodes explored:", summary["heuristic"]["mean_nodes_explored"])
     if summary["pct_faster_time"] is not None:
         print(f"  Heuristic ~{summary['pct_faster_time']:.1f}% faster (time) vs uninformed mean")
     else:
@@ -222,6 +234,13 @@ def main() -> None:
         )
     else:
         print("  Operations % improvement: N/A (zero uninformed mean operations)")
+    if summary["pct_fewer_nodes_explored"] is not None:
+        print(
+            "  Heuristic "
+            + f"~{summary['pct_fewer_nodes_explored']:.1f}% fewer nodes explored vs uninformed mean"
+        )
+    else:
+        print("  Nodes explored % improvement: N/A (zero uninformed mean nodes explored)")
     if summary["pct_fewer_backtracks"] is not None:
         print(
             f"  Heuristic ~{summary['pct_fewer_backtracks']:.1f}% fewer backtracks vs uninformed mean"
@@ -229,9 +248,10 @@ def main() -> None:
     else:
         print("  Backtracks % improvement: N/A (zero uninformed mean backtracks)")
 
-    p_time, p_ops = plot_bars(summary, n_runs=args.runs, out_dir=args.figures_dir)
+    p_time, p_ops, p_nodes = plot_bars(summary, n_runs=args.runs, out_dir=args.figures_dir)
     print(f"\nWrote {p_time}")
     print(f"Wrote {p_ops}")
+    print(f"Wrote {p_nodes}")
 
 
 if __name__ == "__main__":

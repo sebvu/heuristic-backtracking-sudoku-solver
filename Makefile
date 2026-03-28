@@ -9,7 +9,7 @@ else
 	SET_PYTHONPATH = PYTHONPATH=src
 endif
 
-.PHONY: run install benchmark viz-demo
+.PHONY: run install benchmark viz-demo animation
 
 # Run the project
 run:
@@ -22,6 +22,10 @@ benchmark:
 # Interpretation + plots from synthetic expData (no full dataset run)
 viz-demo:
 	$(SET_PYTHONPATH) $(PYTHON) -m data_visualization --demo
+
+# Run solve and create comparison animation
+animation:
+	$(SET_PYTHONPATH) $(PYTHON) -m solver_animation
 
 # Install dependencies
 install:

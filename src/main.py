@@ -10,7 +10,8 @@ from data_visualization import (
 )
 from world import SudokuWorld
 from solver import SudokuSolver
-from constants import MAX_EXP_TIME_IN_SECS
+from constants import MAX_RUNS_PER_ALGO, RANDOM_STATE
+
 
 def main():
     world = SudokuWorld()
@@ -19,24 +20,28 @@ def main():
     world.clearExpData() # ensure the dict is set correctly
 
     df = pd.read_csv("data/test.csv", usecols=["question", "answer"])
+    
+    # Selects 10 random samples from dataset, random_state makes it reproducible
+    sample_df = df.sample(n=MAX_RUNS_PER_ALGO, random_state=RANDOM_STATE)
 
-    tracemalloc.start() # track memory alloc for function
-
+    print("Uninformed Solve: ")
     # test data for uninformed solve
-    start = time.monotonic()
-    for question, answer in zip(df["question"], df["answer"]):
-        if time.monotonic() - start < MAX_EXP_TIME_IN_SECS:
-            tracemalloc.reset_peak()
-            solver.uninformedSolve(str(question), str(answer))
 
+    i = 1
+    for question, answer in zip(sample_df["question"], sample_df["answer"]):
+        print("      Running Uninformed Solve " + str(i))
+        solver.uninformedSolve(str(question), str(answer))
+        i += 1
+
+    print("\nHeuristic Solve: ")
     # test data for heuristics solve
-    start = time.monotonic()
-    for question, answer in zip(df["question"], df["answer"]):
-        if time.monotonic() - start < MAX_EXP_TIME_IN_SECS:
-            tracemalloc.reset_peak()
-            solver.heuristicsSolve(str(question), str(answer))
-
-    tracemalloc.stop() # ensure tracemalloc is finished
+    i = 1;
+    for question, answer in zip(sample_df["question"], sample_df["answer"]):
+        print("      Running Heuristic Solve " + str(i))
+        solver.heuristicsSolve(str(question), str(answer))
+        i += 1
+        
+    print("\n")
 
     text, paths, summary_file = write_all_outputs(
         world,

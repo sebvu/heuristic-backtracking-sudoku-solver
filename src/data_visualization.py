@@ -19,6 +19,7 @@ import pandas as pd
 from matplotlib import ticker
 
 from world import SudokuWorld
+from constants import RANDOM_STATE
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_FIGURES_DIR = REPO_ROOT / "figures"
@@ -28,11 +29,12 @@ METRIC_LABELS = {
     "numOfOperations": "Operations",
     "numOfBacktraces": "Backtraces",
     "peakMemUsage": "Peak memory (MB)",
+    "numOfNodesExplored": "Nodes explored",
 }
 
 DEFAULT_CASES = 300
 DEFAULT_SUMMARY_PATH = DEFAULT_FIGURES_DIR / "summary.txt"
-LOG_METRICS = {"numOfOperations", "numOfBacktraces"}
+LOG_METRICS = {"numOfOperations", "numOfBacktraces", "numOfNodesExplored"}
 
 
 def _format_number(x: float | int | None, *, decimals: int = 6) -> str:
@@ -85,7 +87,13 @@ def _expdata_frame(world: SudokuWorld) -> pd.DataFrame:
     df = pd.DataFrame(ed)
     if df.empty:
         return df
-    for col in ("solveTimeSecs", "numOfOperations", "numOfBacktraces", "peakMemUsage"):
+    for col in (
+        "solveTimeSecs",
+        "numOfOperations",
+        "numOfBacktraces",
+        "peakMemUsage",
+        "numOfNodesExplored",
+    ):
         df[col] = pd.to_numeric(df[col], errors="coerce")
     return df
 
@@ -108,7 +116,7 @@ def save_distribution_figures(
     out_dir: Path = DEFAULT_FIGURES_DIR,
     cases: int = DEFAULT_CASES,
 ) -> list[Path]:
-    """Boxplots per metric (log only for operations/backtraces)."""
+    """Boxplots per metric (log only for count-based search metrics)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     df = _expdata_frame(world)
     u, h, n = _split_cases(df, max_cases=cases)
@@ -117,9 +125,13 @@ def save_distribution_figures(
         return written
 
     for m, title in METRIC_LABELS.items():
+        u_vals, h_vals = _metric_series_pair(u, h, m)
+        if u_vals.empty or h_vals.empty:
+            continue
+        
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.boxplot(
-            [u[m].dropna().values, h[m].dropna().values],
+            [u_vals.values, h_vals.values],
             tick_labels=["Uninformed", "Heuristic"],
             showfliers=False,
         )
@@ -138,13 +150,21 @@ def _cummean(xs: pd.Series) -> pd.Series:
     return xs.expanding(min_periods=1).mean()
 
 
+def _metric_series_pair(
+    u: pd.DataFrame,
+    h: pd.DataFrame,
+    metric: str,
+) -> tuple[pd.Series, pd.Series]:
+    return u[metric].dropna(), h[metric].dropna()
+
+
 def save_trend_figures_log(
     world: SudokuWorld,
     *,
     out_dir: Path = DEFAULT_FIGURES_DIR,
     cases: int = DEFAULT_CASES,
 ) -> list[Path]:
-    """Cumulative mean trends (log only for operations/backtraces)."""
+    """Cumulative mean trends (log only for count-based search metrics)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     df = _expdata_frame(world)
     u, h, n = _split_cases(df, max_cases=cases)
@@ -154,6 +174,10 @@ def save_trend_figures_log(
 
     x = range(1, n + 1)
     for m, title in METRIC_LABELS.items():
+        u_vals, h_vals = _metric_series_pair(u, h, m)
+        if u_vals.empty or h_vals.empty:
+            continue
+        
         fig, ax = plt.subplots(figsize=(7, 4))
         ax.plot(x, _cummean(u[m]).values, label="Uninformed", color="#4c72b0")
         ax.plot(x, _cummean(h[m]).values, label="Heuristic", color="#55a868")
@@ -186,6 +210,10 @@ def save_trend_figures_pct_improvement(
 
     x = range(1, n + 1)
     for m, title in METRIC_LABELS.items():
+        u_vals, h_vals = _metric_series_pair(u, h, m)
+        if u_vals.empty or h_vals.empty:
+            continue
+        
         u_c = _cummean(u[m])
         h_c = _cummean(h[m])
         pct = pd.Series([None] * n, dtype="float64")
@@ -238,6 +266,7 @@ def format_interpretation_text(result: dict[str, Any]) -> str:
     lines.append(
         f"Runs: uninformed={result['n_uninformed']}, heuristic={result['n_heuristic']}"
     )
+    lines.append(f"\n Random Seed Used: {RANDOM_STATE}")
     for label, key in ("Uninformed", "uninformed"), ("Heuristic", "heuristic"):
         lines.append(f"\n{label} (best / worst / mean):")
         block = result[key]
@@ -279,12 +308,11 @@ def save_interpretation_figures(
     for m, title in METRIC_LABELS.items():
         u = result["uninformed"][m]["mean"]
         h = result["heuristic"][m]["mean"]
-        if u is None and h is None:
+        if u is None or h is None:
             continue
-        u_val = 0.0 if u is None else u
-        h_val = 0.0 if h is None else h
+        
         fig, ax = plt.subplots(figsize=(6, 4))
-        vals = [u_val, h_val]
+        vals = [u, h]
         ax.bar(labels, vals, color=["#4c72b0", "#55a868"])
         ax.axhline(0, color="gray", linewidth=0.8, zorder=0)
         lo, hi = min(vals), max(vals)
@@ -330,10 +358,10 @@ def _demo_synthetic_world() -> SudokuWorld:
     w = SudokuWorld()
     w.clearExpData()
     # Two uninformed rows, two heuristic rows (synthetic)
-    w.addExpData([False, 0.1, 100, 5, 1.0])
-    w.addExpData([False, 0.2, 120, 8, 1.2])
-    w.addExpData([True, 0.05, 40, 2, 0.8])
-    w.addExpData([True, 0.08, 50, 3, 0.9])
+    w.addExpData([False, 0.1, 100, 5, 1.0, 30])
+    w.addExpData([False, 0.2, 120, 8, 1.2, 36])
+    w.addExpData([True, 0.05, 40, 2, 0.8, 12])
+    w.addExpData([True, 0.08, 50, 3, 0.9, 15])
     return w
 
 

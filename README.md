@@ -1,6 +1,6 @@
 # COSC4368 Group Project
 
-**Topic:** Heuristic Backtracking Sudoku Solver
+**Topic:** Uninformed and Heuristic Backtracking Sudoku Solver
 
 ## Members
 - Jester Santos
@@ -16,42 +16,56 @@ This is a group project for COSC4368, in which the mission is to show obvious pe
 
 There are 423k sudoku examples used in a data.csv file, provided from [sapientinc/sudoku-extreme](https://huggingface.co/datasets/sapientinc/sudoku-extreme).
 
-## How do you run?
+## How to Run
 
-There is a provided Makefile to this project. It'll automatically detect the OS you're in, and run accordingly. If there are issues with it, please raise it!
+This project uses a provided `Makefile` to simplify execution. It automatically handles OS differences and sets `PYTHONPATH=src` so modules run correctly.
 
-Run the following. **ALWAYS CHECK WHAT A MAKEFILE IS EXECUTING ON YOUR COMPUTER.**
+## Setup
 
-```shell
+```bash
 make install
+```
+
+Installs the Python packages listed in `requirements.txt`.
+
+## Make Commands
+
+```bash
 make run
 ```
 
-### Interpretation demo (figures only, no CSV run)
+Runs the main experiment pipeline in `src/main.py`. This samples puzzles, runs both solvers, and writes the summary and figures output.
 
-From the repo root, with `PYTHONPATH=src` set (see Makefile for how this project runs modules):
+```bash
+make benchmark
+```
 
-```shell
+Runs the benchmark module in `src/benchmark.py` for a solver comparison workflow.
+
+```bash
 make viz-demo
 ```
 
-On systems without `make`, use: `PYTHONPATH=src python -m data_visualization --demo`. This regenerates the summary printout and PNGs under `figures/`. See `docs/InterpretingDataDocs.md` for details.
+Runs the visualization demo in `src/data_visualization.py --demo`. This uses synthetic `expData` to test the interpretation and plotting code without running the full solver pipeline.
 
-**Note:** `figures/*.png` is gitignored—each developer generates plots locally.
+```bash
+make animation
+```
 
-| Command | Purpose | Main outputs under `figures/` |
-|--------|---------|-------------------------------|
-| `make run` | Full CSV experiment (time-capped) + interpretation | `interpret_*.png` |
-| `make benchmark` | Same puzzle, N runs per solver (quick sanity check) | `mean_solve_time.png`, `mean_operations.png` |
-| `make viz-demo` | Synthetic data only; tests interpret + plots | `interpret_*.png` |
+Runs the animation script in `src/solver_animation.py` to generate a solver comparison animation.
 
-`viz-demo` is not the main experiment. `benchmark` is not a rewrite of `make run`—it is a small, repeatable single-row comparison.
+```bash
+make install
+```
+
+Installs or updates the project dependencies from `requirements.txt`.
+
 
 ## How do you contribute?
 
 To the few members on this project.. you need to install **git lfs** locally **on your computer** (THIS IS NOT THE SAME AS THE `git lfs install` COMMAND!). This project uses git lfs to store the large test.csv file on this repository.
 
-```shell
+```bash
 git lfs install
 git clone <repo>
 cd <repo>
@@ -60,7 +74,7 @@ git lfs pull
 
 You must also ensure you have all the requirements.
 
-```shell
+```bash
 make install
 ```
 
@@ -69,12 +83,12 @@ then you can `make run`.
 > [!NOTE]
 > You most likely will encounter an issue where 'the environment is externally managed.' The best approach is to create a python venv.
 
-```
+```bash
 cd <repo>
-python -m venv .venv
-source ./venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
 Once you have done this, then you should be able to run `make install` then `make run`.
 
-Every time you access the project directory through a new terminal instance, **you have to do source ./venv/bin/activate**
+Every time you access the project directory through a new terminal instance, **you have to do `source .venv/bin/activate`**
