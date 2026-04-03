@@ -20,7 +20,7 @@ There are 423k sudoku examples used in a data.csv file, provided from [sapientin
 
 This project uses a provided `Makefile` to simplify execution. It automatically handles OS differences and sets `PYTHONPATH=src` so modules run correctly.
 
-## Setup
+### Setup
 
 ```bash
 make install
@@ -28,7 +28,7 @@ make install
 
 Installs the Python packages listed in `requirements.txt`.
 
-## Make Commands
+### Make Commands
 
 ```bash
 make run
@@ -59,6 +59,18 @@ make install
 ```
 
 Installs or updates the project dependencies from `requirements.txt`.
+
+### Project Settings
+
+Located in `src/constants.py` there are three configuration variables that you can use.
+
+| Config Variable | Default Value (int) | Description |
+| --------------- | --------------- | --------------- |
+| MAX_EXP_TIME_IN_SECS | 200 | Max amount of allocated time for each test case |
+| MAX_RUNS_PER_ALGO | 10 | Total random test cases select for run |
+| RANDOM_STATE | 5 | Seed number to select the random test cases |
+
+## Analysis of Results
 
 
 ## How do you contribute?

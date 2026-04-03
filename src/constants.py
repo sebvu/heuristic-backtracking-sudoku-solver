@@ -1,5 +1,5 @@
 # max amount of allocated time for each experiment
-MAX_EXP_TIME_IN_SECS = 30
+MAX_EXP_TIME_IN_SECS = 200
 
 # max number of runs that each solver algorithm should run
 MAX_RUNS_PER_ALGO = 10
