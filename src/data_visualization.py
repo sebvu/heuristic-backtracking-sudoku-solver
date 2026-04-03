@@ -282,6 +282,11 @@ def format_interpretation_text(result: dict[str, Any]) -> str:
         + f"heuristic={timeout_counts['heuristic']} "
         + f"(limit={MAX_EXP_TIME_IN_SECS}s)"
     )
+    lines.append(
+        "Total secs to complete (completed only): "
+        + f"uninformed={result['total_uninformed_solve_time']}, "
+        + f"heuristic={result['total_heuristic_solve_time']}"
+    )
     lines.append(f"\n Random Seed Used: {RANDOM_STATE}")
     for label, key in ("Uninformed", "uninformed"), ("Heuristic", "heuristic"):
         lines.append(f"\n{label} (completed solves only; best / worst / mean):")

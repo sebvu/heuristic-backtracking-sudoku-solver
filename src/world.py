@@ -223,6 +223,8 @@ class SudokuWorld:
                 "n_heuristic": 0,
                 "n_uninformed_completed": 0,
                 "n_heuristic_completed": 0,
+                "total_uninformed_solve_time": 0,
+                "total_heuristic_solve_time": 0,
                 "timeout_counts": {"uninformed": 0, "heuristic": 0},
             }
 
@@ -283,5 +285,7 @@ class SudokuWorld:
             "n_heuristic": int(len(df_h)),
             "n_uninformed_completed": int(len(df_u_completed)),
             "n_heuristic_completed": int(len(df_h_completed)),
+            "total_uninformed_solve_time": round(sum(df_u_completed["solveTimeSecs"]), 2),
+            "total_heuristic_solve_time": round(sum(df_h_completed["solveTimeSecs"]), 2),
             "timeout_counts": timeout_counts,
         }
