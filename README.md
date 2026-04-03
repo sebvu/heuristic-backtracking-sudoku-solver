@@ -72,6 +72,37 @@ Located in `src/constants.py` there are three configuration variables that you c
 
 ## Analysis of Results
 
+In figures there is a wide set of graphs that will be generated after running the program once with whatever settings. It will reflect the following metrics;
+
+```
+- dist_numOfBacktraces (box chart)
+- dist_numOfNodesExplored (box chart)
+- dist_numOfOperations (box chart)
+- dist_peakMemUsage (box chart)
+- dist_solveTimeSecs (box chart)
+- interpret_comparison_pct (bar chart)
+- interpret_numOfBacktraces (column chart)
+- interpret_numOfNodesExplored (column chart)
+- interpret_numOfOperations (column chart)
+- interpret_numOfOperations (column chart)
+- interpret_peakMemUsage (column chart)
+- interpret_solveTimeSecs (column chart)
+- mean_nodes_explored (column chart) *(faulty chart)*
+- mean_operations (column chart)
+- mean_solve_time (column chart)
+- summary.txt (A numerical summary between heuristics and uninformed)
+- trend_cummean_numOfBacktraces (line graph)
+- trend_cummean_numOfNodesExplored (line graph)
+- trend_cummean_numOfOperations (line graph)
+- trend_cummean_peakMemUsage (line graph)
+- trend_cummean_solveTimeSeconds (line graph)
+- trend_pct_improvement_numOfBacktraces (line graph)
+- trend_pct_improvement_numOfNodesExplored (line graph)
+- trend_pct_improvement_numOfOperations (line graph)
+- trend_pct_improvement_peakMemUsage (line graph)
+- trend_pct_improvement_solveTimeSecs (line graph)
+```
+
 
 ## How do you contribute?
 
