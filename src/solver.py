@@ -1,6 +1,7 @@
 import time
 import tracemalloc
 from world import SudokuWorld
+from constants import MAX_EXP_TIME_IN_SECS
 
 
 """
@@ -19,6 +20,10 @@ Functions:
     using an heuristics algorithm, will put data, res, in expData
 """
 
+
+class SolveTimeoutError(TimeoutError):
+    """Raised when a single solve exceeds the configured per-run time limit."""
+
 class SudokuSolver:
     
     # Init with world, and also initialize numOfOps and numOfBtraces to 0
@@ -27,6 +32,7 @@ class SudokuSolver:
         self.numOfOps = 0
         self.numOfBtraces = 0
         self.numOfNodesExplored = 0
+        self.solve_deadline = None
 
     # Helper function to reset numOfOps and numOfBtraces to 0 before each solve
     def _resetMetrics(self):
@@ -36,9 +42,26 @@ class SudokuSolver:
         self.world.nodes_explored = 0
         self.world.backtracks = 0
         self.world.solve_time = 0.0
+        self.world.solve_timed_out = False
+        self.solve_deadline = None
+
+    def _startTimedSolve(self):
+        start_time = time.monotonic()
+        self.solve_deadline = start_time + MAX_EXP_TIME_IN_SECS
+        return start_time
+
+    def _checkTimeout(self):
+        if self.solve_deadline is None:
+            return
+        if time.monotonic() >= self.solve_deadline:
+            raise SolveTimeoutError(
+                f"solve exceeded the {MAX_EXP_TIME_IN_SECS} second limit"
+            )
 
     def _countOperation(self, amount=1):
         self.numOfOps += amount
+        if self.numOfOps % 1024 == 0:
+            self._checkTimeout()
 
     def _placeValue(self, row, col, num):
         self._countOperation()
@@ -84,6 +107,7 @@ class SudokuSolver:
 
     # Backtracking algorithm for uninformed solve
     def _backtrackUninformed(self):
+        self._checkTimeout()
         pos = self._findNextEmpty()
         if pos is None:
             return True
@@ -103,11 +127,12 @@ class SudokuSolver:
         return False
 
     # Helper function to record experiment data into world.expData
-    def _recordExperiment(self, isHeuristic, startTime, peakInMB):
+    def _recordExperiment(self, isHeuristic, startTime, peakInMB, timedOut=False):
         solve_time = time.monotonic() - startTime
         self.world.nodes_explored = self.numOfNodesExplored
         self.world.backtracks = self.numOfBtraces
         self.world.solve_time = solve_time
+        self.world.solve_timed_out = timedOut
         res = [
             isHeuristic,
             solve_time,
@@ -115,6 +140,7 @@ class SudokuSolver:
             self.numOfBtraces,
             peakInMB,
             self.numOfNodesExplored,
+            timedOut,
         ]
         self.world.addExpData(res)
 
@@ -122,9 +148,11 @@ class SudokuSolver:
     def uninformedSolve(self, q, a):
         tracemalloc.start()
 
-        sTime = time.monotonic()
         self._resetMetrics()
+        sTime = self._startTimedSolve()
         self.world.populateSudokuWorld(q)
+        timed_out = False
+        pending_error = None
 
         try:
             if not self.world.verifyTerminalReached(a):
@@ -134,13 +162,21 @@ class SudokuSolver:
 
             if not self.world.verifyTerminalReached(a):
                 raise ValueError("uninformed solver did not reach the expected terminal state")
+        except SolveTimeoutError:
+            timed_out = True
+            print(f"uninformed solver timed out after {MAX_EXP_TIME_IN_SECS} seconds")
+        except Exception as exc:
+            pending_error = exc
         finally:
             peak = tracemalloc.get_traced_memory()[1]
             tracemalloc.stop()
+            self.solve_deadline = None
 
         peakInMB = peak / 1024 / 1024
 
-        self._recordExperiment(False, sTime, peakInMB)
+        self._recordExperiment(False, sTime, peakInMB, timedOut=timed_out)
+        if pending_error is not None:
+            raise pending_error
 
 
     # Helper function to get the set of legal values for a given empty cell
@@ -207,6 +243,7 @@ class SudokuSolver:
 
     # Backtracking algorithm using MRV (cell selection) and LCV (value ordering)
     def _backtrackHeuristic(self):
+        self._checkTimeout()
         pos = self._findNextEmptyMRV()
         if pos is None:
             return True
@@ -230,9 +267,11 @@ class SudokuSolver:
     # Heuristics solve experiment
     def heuristicsSolve(self, q, a):
         tracemalloc.start()
-        sTime = time.monotonic()
         self._resetMetrics()
+        sTime = self._startTimedSolve()
         self.world.populateSudokuWorld(q)
+        timed_out = False
+        pending_error = None
         try:
             if not self.world.verifyTerminalReached(a):
                 solved = self._backtrackHeuristic()
@@ -241,10 +280,18 @@ class SudokuSolver:
 
             if not self.world.verifyTerminalReached(a):
                 raise ValueError("heuristic solver did not reach the expected terminal state")
+        except SolveTimeoutError:
+            timed_out = True
+            print(f"heuristic solver timed out after {MAX_EXP_TIME_IN_SECS} seconds")
+        except Exception as exc:
+            pending_error = exc
         finally:
             peak = tracemalloc.get_traced_memory()[1]
             tracemalloc.stop()
+            self.solve_deadline = None
 
         peakInMB = peak / 1024 / 1024
 
-        self._recordExperiment(True, sTime, peakInMB)
+        self._recordExperiment(True, sTime, peakInMB, timedOut=timed_out)
+        if pending_error is not None:
+            raise pending_error

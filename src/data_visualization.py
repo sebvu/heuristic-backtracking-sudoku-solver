@@ -19,7 +19,7 @@ import pandas as pd
 from matplotlib import ticker
 
 from world import SudokuWorld
-from constants import RANDOM_STATE
+from constants import MAX_EXP_TIME_IN_SECS, RANDOM_STATE
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_FIGURES_DIR = REPO_ROOT / "figures"
@@ -87,6 +87,9 @@ def _expdata_frame(world: SudokuWorld) -> pd.DataFrame:
     df = pd.DataFrame(ed)
     if df.empty:
         return df
+    if "timedOut" not in df.columns:
+        df["timedOut"] = False
+    df["timedOut"] = df["timedOut"].astype(bool)
     for col in (
         "solveTimeSecs",
         "numOfOperations",
@@ -95,6 +98,7 @@ def _expdata_frame(world: SudokuWorld) -> pd.DataFrame:
         "numOfNodesExplored",
     ):
         df[col] = pd.to_numeric(df[col], errors="coerce")
+        df.loc[df["timedOut"], col] = float("nan")
     return df
 
 
@@ -263,12 +267,24 @@ def write_all_outputs(
 def format_interpretation_text(result: dict[str, Any]) -> str:
     """Human-readable summary for console or logs."""
     lines: list[str] = []
+    timeout_counts = result.get("timeout_counts", {"uninformed": 0, "heuristic": 0})
     lines.append(
         f"Runs: uninformed={result['n_uninformed']}, heuristic={result['n_heuristic']}"
     )
+    lines.append(
+        "Completed runs: "
+        + f"uninformed={result.get('n_uninformed_completed', result['n_uninformed'])}, "
+        + f"heuristic={result.get('n_heuristic_completed', result['n_heuristic'])}"
+    )
+    lines.append(
+        "Timed out runs: "
+        + f"uninformed={timeout_counts['uninformed']}, "
+        + f"heuristic={timeout_counts['heuristic']} "
+        + f"(limit={MAX_EXP_TIME_IN_SECS}s)"
+    )
     lines.append(f"\n Random Seed Used: {RANDOM_STATE}")
     for label, key in ("Uninformed", "uninformed"), ("Heuristic", "heuristic"):
-        lines.append(f"\n{label} (best / worst / mean):")
+        lines.append(f"\n{label} (completed solves only; best / worst / mean):")
         block = result[key]
         for m, title in METRIC_LABELS.items():
             s = block[m]
@@ -281,7 +297,9 @@ def format_interpretation_text(result: dict[str, Any]) -> str:
                     + f"max={_format_number(s['max'])} "
                     + f"mean={_format_number(s['mean'])}"
                 )
-    lines.append("\nHeuristic vs uninformed (mean baseline %; positive => heuristic lower/faster):")
+    lines.append(
+        "\nHeuristic vs uninformed (completed-solve means only; positive => heuristic lower/faster):"
+    )
     for m, title in METRIC_LABELS.items():
         p = result["comparison_pct"][m]
         if p is None:
@@ -358,10 +376,10 @@ def _demo_synthetic_world() -> SudokuWorld:
     w = SudokuWorld()
     w.clearExpData()
     # Two uninformed rows, two heuristic rows (synthetic)
-    w.addExpData([False, 0.1, 100, 5, 1.0, 30])
-    w.addExpData([False, 0.2, 120, 8, 1.2, 36])
-    w.addExpData([True, 0.05, 40, 2, 0.8, 12])
-    w.addExpData([True, 0.08, 50, 3, 0.9, 15])
+    w.addExpData([False, 0.1, 100, 5, 1.0, 30, False])
+    w.addExpData([False, 0.2, 120, 8, 1.2, 36, False])
+    w.addExpData([True, 0.05, 40, 2, 0.8, 12, False])
+    w.addExpData([True, 0.08, 50, 3, 0.9, 15, False])
     return w
 
 
