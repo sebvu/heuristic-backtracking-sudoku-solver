@@ -80,6 +80,7 @@ In figures there is a wide set of graphs that will be generated after running th
 - dist_numOfOperations (box chart)
 - dist_peakMemUsage (box chart)
 - dist_solveTimeSecs (box chart)
+- exp_data.csv (csv file of raw data from experiments)
 - interpret_comparison_pct (bar chart)
 - interpret_numOfBacktraces (column chart)
 - interpret_numOfNodesExplored (column chart)
