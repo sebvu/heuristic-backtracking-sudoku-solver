@@ -8,9 +8,10 @@ from data_visualization import (
     DEFAULT_SUMMARY_PATH,
     write_all_outputs,
 )
+from dataCSV import DEFAULT_EXP_DATA_CSV_PATH, write_expdata_csv
 from world import SudokuWorld
 from solver import SudokuSolver
-from constants import MAX_RUNS_PER_ALGO, RANDOM_STATE
+from constants import MAX_RUNS_PER_ALGO, RANDOM_STATE, MAX_EXP_TIME_IN_SECS
 
 
 def main():
@@ -23,6 +24,7 @@ def main():
     
     # Selects 10 random samples from dataset, random_state makes it reproducible
     sample_df = df.sample(n=MAX_RUNS_PER_ALGO, random_state=RANDOM_STATE)
+    print(f"Per-run timeout: {MAX_EXP_TIME_IN_SECS} seconds")
 
     print("Uninformed Solve: ")
     # test data for uninformed solve
@@ -49,8 +51,10 @@ def main():
         cases=DEFAULT_CASES,
         summary_path=DEFAULT_SUMMARY_PATH,
     )
+    exp_data_csv = write_expdata_csv(world, path=DEFAULT_EXP_DATA_CSV_PATH)
     print(text)
     print(f"Wrote {summary_file}")
+    print(f"Wrote {exp_data_csv}")
     for path in paths:
         print(f"Wrote {path}")
 

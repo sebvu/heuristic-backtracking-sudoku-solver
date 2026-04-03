@@ -43,12 +43,14 @@ class SudokuWorld:
         self.nodes_explored = 0
         self.backtracks = 0
         self.solve_time = 0.0
+        self.solve_timed_out = False
         self.expData = { "isHeuristic": [],
                         "solveTimeSecs": [],
                         "numOfOperations": [],
                         "numOfBacktraces": [],
                         "peakMemUsage": [],
-                        "numOfNodesExplored": [] }
+                        "numOfNodesExplored": [],
+                        "timedOut": [] }
 
     # Add new res list to expData
     def addExpData(self, res: List):
@@ -59,15 +61,17 @@ class SudokuWorld:
             "numOfBacktraces",
             "peakMemUsage",
             "numOfNodesExplored",
+            "timedOut",
         ]
+        bool_keys = {"isHeuristic", "timedOut"}
 
         if len(res) != len(keys):
             raise ValueError(f"Expected {len(keys)} values for res, got {len(res)}: {res}")
 
-        for idx, (k, r) in enumerate(zip(keys, res)):
-            if idx == 0 and type(r) is bool:
+        for k, r in zip(keys, res):
+            if k in bool_keys and type(r) is bool:
                 self.expData[k].append(r)
-            elif idx > 0 and (type(r) is int or type(r) is float):
+            elif k not in bool_keys and (type(r) is int or type(r) is float):
                 self.expData[k].append(r)
             else:
                 raise TypeError(f"Faulty type detected for res {res}")
@@ -128,12 +132,14 @@ class SudokuWorld:
 
     # ensure expData is set properly
     def clearExpData(self):
+        self.solve_timed_out = False
         self.expData = { "isHeuristic": [],
                         "solveTimeSecs": [],
                         "numOfOperations": [],
                         "numOfBacktraces": [],
                         "peakMemUsage": [],
-                        "numOfNodesExplored": [] }
+                        "numOfNodesExplored": [],
+                        "timedOut": [] }
 
     # overwrite current sMap with new q, ENSURE IT IS ALL INTS
     def populateSudokuWorld(self, q):
@@ -215,9 +221,15 @@ class SudokuWorld:
                 "comparison_pct": {m: None for m in metrics},
                 "n_uninformed": 0,
                 "n_heuristic": 0,
+                "n_uninformed_completed": 0,
+                "n_heuristic_completed": 0,
+                "timeout_counts": {"uninformed": 0, "heuristic": 0},
             }
 
         df = pd.DataFrame(self.expData)
+        if "timedOut" not in df.columns:
+            df["timedOut"] = False
+        df["timedOut"] = df["timedOut"].astype(bool)
         metrics = [
             "solveTimeSecs",
             "numOfOperations",
@@ -242,9 +254,15 @@ class SudokuWorld:
 
         df_u = df.loc[~df["isHeuristic"]]
         df_h = df.loc[df["isHeuristic"]]
+        timeout_counts = {
+            "uninformed": int(df_u["timedOut"].sum()),
+            "heuristic": int(df_h["timedOut"].sum()),
+        }
+        df_u_completed = df_u.loc[~df_u["timedOut"]]
+        df_h_completed = df_h.loc[~df_h["timedOut"]]
 
-        uninformed = stats_for(df_u)
-        heuristic = stats_for(df_h)
+        uninformed = stats_for(df_u_completed)
+        heuristic = stats_for(df_h_completed)
 
         # actual comparison of both means
         # calc pct of how much heuristic mean is better than uninformed mean
@@ -263,4 +281,7 @@ class SudokuWorld:
             "comparison_pct": comparison_pct,
             "n_uninformed": int(len(df_u)),
             "n_heuristic": int(len(df_h)),
+            "n_uninformed_completed": int(len(df_u_completed)),
+            "n_heuristic_completed": int(len(df_h_completed)),
+            "timeout_counts": timeout_counts,
         }

@@ -66,8 +66,8 @@ Located in `src/constants.py` there are three configuration variables that you c
 
 | Config Variable | Default Value (int) | Description |
 | --------------- | --------------- | --------------- |
-| MAX_EXP_TIME_IN_SECS | 200 | Max amount of allocated time for each test case |
-| MAX_RUNS_PER_ALGO | 10 | Total random test cases select for run |
+| MAX_EXP_TIME_IN_SECS | 150 | Max amount of allocated time for each test case |
+| MAX_RUNS_PER_ALGO | 30 | Total random test cases select for run |
 | RANDOM_STATE | 5 | Seed number to select the random test cases |
 
 ## Analysis of Results
