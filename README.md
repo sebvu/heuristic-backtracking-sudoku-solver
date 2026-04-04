@@ -104,6 +104,18 @@ In figures there is a wide set of graphs that will be generated after running th
 - trend_pct_improvement_solveTimeSecs (line graph)
 ```
 
+On the repo there is a `results.zip` file. This file was run with the following configurations. View for examples.
+
+```
+# max amount of allocated time for each experiment
+MAX_EXP_TIME_IN_SECS = 300 # Set to 5 minutes
+
+# max number of runs that each solver algorithm should run
+MAX_RUNS_PER_ALGO = 5000
+
+# random number generator to allow for consistent tests
+RANDOM_STATE = 5
+```
 
 ## How do you contribute?
 
