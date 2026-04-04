@@ -6,3 +6,4 @@ session.vim
 # Generated plots (make run, benchmark, viz-demo); keep folder via .gitkeep
 figures/*
 !figures/.gitkeep
+results_fixed/*
