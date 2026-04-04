@@ -32,7 +32,7 @@ METRIC_LABELS = {
     "numOfNodesExplored": "Nodes explored",
 }
 
-DEFAULT_CASES = 300
+DEFAULT_CASES = 5000
 DEFAULT_SUMMARY_PATH = DEFAULT_FIGURES_DIR / "summary.txt"
 LOG_METRICS = {"numOfOperations", "numOfBacktraces", "numOfNodesExplored"}
 
@@ -373,6 +373,30 @@ def save_interpretation_figures(
         fig.savefig(path, dpi=150, bbox_inches="tight")
         plt.close(fig)
         written.append(path)
+        
+    pct = result["comparison_pct"]
+    keys = [
+        k for k in METRIC_LABELS
+        if k != "peakMemUsage" and pct.get(k) is not None
+    ]
+    if keys:
+        fig, ax = plt.subplots(figsize=(7, 4))
+        vals = [pct[k] for k in keys]
+        short = [METRIC_LABELS[k].split("(")[0].strip() for k in keys]
+        ax.barh(short, vals, color="#8172b3")
+        lo = min(vals)
+        hi = max(vals)
+        pad = (hi - lo) * 0.08 + 1e-6
+        ax.set_xlim(min(lo, 0) - pad, max(hi, 0) + pad)
+        ax.axvline(0, color="gray", linewidth=0.8)
+        ax.set_xlabel("% vs uninformed mean (positive => heuristic better)")
+        ax.set_title("Heuristic vs uninformed (mean-based)")
+        ax.xaxis.set_major_formatter(_plain_axis_formatter(decimals=2))
+        fig.tight_layout()
+        path = out_dir / "interpret_comparison_pct_no_memory.png"
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        written.append(path)
 
     return written
 
@@ -385,6 +409,39 @@ def _demo_synthetic_world() -> SudokuWorld:
     w.addExpData([False, 0.2, 120, 8, 1.2, 36, False])
     w.addExpData([True, 0.05, 40, 2, 0.8, 12, False])
     w.addExpData([True, 0.08, 50, 3, 0.9, 15, False])
+    return w
+
+# Load data from CSV to World DF
+def world_from_csv(csv_path: Path) -> SudokuWorld:
+    df = pd.read_csv(csv_path)
+
+    required = [
+        "isHeuristic",
+        "solveTimeSecs",
+        "numOfOperations",
+        "numOfBacktraces",
+        "peakMemUsage",
+        "numOfNodesExplored",
+        "timedOut",
+    ]
+    missing = [col for col in required if col not in df.columns]
+    if missing:
+        raise ValueError(f"CSV is missing required columns: {missing}")
+
+    w = SudokuWorld()
+    w.clearExpData()
+
+    for _, row in df.iterrows():
+        w.addExpData([
+            bool(row["isHeuristic"]),
+            float(row["solveTimeSecs"]) if pd.notna(row["solveTimeSecs"]) else float("nan"),
+            float(row["numOfOperations"]) if pd.notna(row["numOfOperations"]) else float("nan"),
+            float(row["numOfBacktraces"]) if pd.notna(row["numOfBacktraces"]) else float("nan"),
+            float(row["peakMemUsage"]) if pd.notna(row["peakMemUsage"]) else float("nan"),
+            float(row["numOfNodesExplored"]) if pd.notna(row["numOfNodesExplored"]) else float("nan"),
+            bool(row["timedOut"]),
+        ])
+
     return w
 
 
@@ -413,23 +470,32 @@ def main() -> None:
         default=DEFAULT_SUMMARY_PATH,
         help="Path for summary.txt output",
     )
+    parser.add_argument(
+    "--csv",
+    type=Path,
+    help="Path to experiment CSV file", 
+    )
     args = parser.parse_args()
 
     if args.demo:
         world = _demo_synthetic_world()
-        text, paths, summary_file = write_all_outputs(
-            world,
-            out_dir=args.figures_dir,
-            cases=int(args.cases),
-            summary_path=args.summary_path,
-        )
-        print(text)
-        print(f"Wrote {summary_file}")
-        for p in paths:
-            print(f"Wrote {p}")
+    elif args.csv:
+        world = world_from_csv(args.csv)
     else:
         parser.print_help()
-        print("\nUse --demo to verify interpretation + plots without running main.")
+        print("\nUse --demo or --csv <path>.")
+        return
+
+    text, paths, summary_file = write_all_outputs(
+        world,
+        out_dir=args.figures_dir,
+        cases=int(args.cases),
+        summary_path=args.summary_path,
+    )
+    print(text)
+    print(f"Wrote {summary_file}")
+    for p in paths:
+        print(f"Wrote {p}")
 
 
 if __name__ == "__main__":
